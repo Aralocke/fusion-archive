@@ -1,0 +1,58 @@
+# Ignore the projects folders and the metadata
+.idea/
+.vs/
+.venv/
+tmp/
+
+# Ignore the generated files for VIM support and the
+# VIM YouCompleteMe plugin.
+.ycm_extra_conf.py
+compile_commands.json
+
+# Do not track CMake created files. In the event of an
+# in-source build, this should make sure we never have
+# any permenenat changes with generated files.
+CMakeFiles/
+*/Makefile
+cmake_install.cmake
+tags
+ctags
+**/include/**/Common.h
+
+# Generated files are bad.
+*.pyc
+.DS_Store
+Thumbs.db
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
