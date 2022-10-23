@@ -1,0 +1,145 @@
+/**
+* Copyright 2015-2022 Daniel Weiner
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
+
+#include <Fusion/Generated/VersionCommand.h>
+#include <Fusion/Generated/Version.h>
+
+#include <Fusion/Argparse.h>
+#include <Fusion/Assert.h>
+#include <Fusion/Compiler.h>
+#include <Fusion/Macros.h>
+#include <Fusion/Platform.h>
+#include <Fusion/StringUtil.h>
+
+#include <iostream>
+#include <sstream>
+
+namespace Fusion
+{
+Result<void> VersionCommand::Run(Options options)
+{
+    VersionCommand cmd(std::move(options));
+    return cmd.Run();
+}
+
+void VersionCommand::Setup(
+    ArgumentParser& parser,
+    Options& options)
+{
+    using namespace std::string_view_literals;
+
+    auto& cmd = parser.AddCommand("version"sv, false)
+        .Action([&](const ArgumentCommand&) -> Result<void> {
+            return VersionCommand::Run(std::move(options));
+        })
+        .Help("View version information for this tool"sv);
+    FUSION_UNUSED(cmd);
+}
+
+VersionCommand::VersionCommand(Options options)
+    : m_options(std::move(options))
+{ }
+
+VersionCommand::~VersionCommand()
+{ }
+
+Result<void> VersionCommand::Run()
+{
+    using namespace std::string_view_literals;
+
+    std::ostringstream o;
+    o << Version::Project() << ' ' << Version::FullVersion() << " ("sv
+        << Version::Branch() << ")\n";
+    o << '\n';
+    o << "Features: "sv;
+    {
+        std::vector<std::string_view> features;
+
+#if FUSION_ADDRESS_SANITIZER_ENABLED
+        features.push_back("Address Sanitizer"sv);
+#endif
+#if FUSION_THREAD_SANITIZER_ENABLED
+        features.push_back("Thread Sanitizer"sv);
+#endif
+#if FUSION_UNDEFINED_SANITIZER_ENABLED
+        features.push_back("Undefined Sanitizer"sv);
+#endif
+#if !defined(NDEBUG)
+        features.push_back("Debug"sv);
+#endif
+#if FUSION_ASSERTIONS_ENABLED
+        features.push_back("Assertions"sv);
+#endif
+#if FUSION_HAS_EXCEPTIONS
+        features.push_back("Exceptions"sv);
+#endif
+#if FUSION_HAS_RTTI
+        features.push_back("RTTI"sv);
+#endif
+#if defined(FUSION_RUST_ENABLED)
+        features.push_back("Rust"sv);
+#endif
+
+        if (!features.empty())
+        {
+            o << StringUtil::Join(features, ", "sv);
+        }
+        else
+        {
+            o << "None"sv;
+        }
+    }
+    o << '\n';
+    std::string build;
+    {
+#if FUSION_PLATFORM_WINDOWS
+        build = "windows"sv;
+#elif FUSION_PLATFORM_LINUX
+        build = "linux"sv;
+#elif FUSION_PLATFORM_APPLE
+        build = "apple"sv;
+#else
+        build = "unknown"sv;
+#endif
+        build += '-';
+#if FUSION_64BIT
+        build += "x86_64"sv;
+#else
+        build += "i386"sv;
+#endif
+
+        build += '-';
+#if FUSION_COMPILER_MSVC
+        build += "msvc("sv;
+        build += FUSION_STRINGIZE(FUSION_COMPILER_MSVC);
+        build += ')';
+#elif FUSION_COMPILER_CLANG
+        build += "clang("sv;
+        build += FUSION_STRINGIZE(FUSION_COMPILER_CLANG);
+        build += ')';
+#elif FUSION_COMPILER_GCC
+        build += "gcc("sv;
+        build += FUSION_STRINGIZE(FUSION_COMPILER_GCC);
+        build += ')';
+#else
+        build = "unknown"sv;
+#endif
+    }
+    o << "This program is built for: "sv << build << '\n';
+    std::cout << o.str();
+    return Success;
+}
+}  // namespace Fusion
