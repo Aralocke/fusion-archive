@@ -1,0 +1,9 @@
+[package]
+name = "rust_playground"
+version = "0.1.0"
+authors = ["Daniel Weiner <info@phantomnet.net>"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
