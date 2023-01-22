@@ -66,10 +66,27 @@
 /// - 'MSVC'
 #define FUSION_COMPILER(...) (FUSION_COMPILER_ ## __VA_ARGS__)
 
-
 // Convert macros to strings
 #define _FUSION_STRINGIZE(a) #a
 #define FUSION_STRINGIZE(a) _FUSION_STRINGIZE(a)
+
+// FUSION_CURRENT_FUNCTION based off the boost COOST_CURRENT_FUNCTION
+// implemenetation.
+#ifndef FUSION_CURRENT_FUNCTION
+#if defined(__GNUC__)
+#define FUSION_CURRENT_FUNCTION __PRETTY_FUNCTION__
+#elif defined(__FUNCSIG__)
+#define FUSION_CURRENT_FUNCTION __FUNCSIG__
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+#define FUSION_CURRENT_FUNCTION __func__
+#elif defined(__cplusplus) && (__cplusplus >= 201103)
+#define FUSION_CURRENT_FUNCTION __func__
+#elif defined(_MSC_VER)
+#define FUSION_CURRENT_FUNCTION __FUNCTION__
+#else
+#define FUSION_CURRENT_FUNCTION "(unknown)"
+#endif
+#endif  // FUSION_CURRENT_FUNCTION
 
 #if FUSION_COMPILER_CLANG
 // CLANG specific macros - START
