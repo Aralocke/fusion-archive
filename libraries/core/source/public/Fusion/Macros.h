@@ -27,6 +27,11 @@
 #define _FUSION_WIDE(str) L ## str
 #define FUSION_WIDE(str) _FUSION_WIDE(str)
 
+#define _FUSION_JOIN(A, B) A ## B
+#define FUSION_JOIN(A, B) _FUSION_JOIN(A, B)
+
+#define FUSION_ANONYMOUS_SYMBOL(A) FUSION_JOIN(A, __COUNTER__)
+
 namespace Fusion
 {
     struct Ignored
