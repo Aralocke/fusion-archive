@@ -57,6 +57,7 @@ file(GLOB WIN_SOURCES "${PROJECT_SOURCE_DIR}/platforms/windows/*.cpp")
 file(GLOB HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/*.h")
 file(GLOB FWD_HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/Fwd/*.h")
 file(GLOB IMPL_HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/Impl/*.h")
+file(GLOB NET_HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/Net/*.h")
 # Header files (Global)
 file(GLOB PRIVATE_HEADERS "${PROJECT_INTERNAL_DIR}/Fusion/Internal/*.h")
 
@@ -66,7 +67,7 @@ if(MSVC)
     source_group(
         TREE ${PROJECT_INCLUDE_DIR}/Fusion
         PREFIX "Header Files\\Public"
-        FILES ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS}
+        FILES ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS} ${NET_HEADERS}
     )
     source_group(
         TREE ${PROJECT_INTERNAL_DIR}/Fusion/Internal
@@ -94,7 +95,7 @@ endif()
 #
 target_sources(Fusion
     PRIVATE
-        ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS}
+        ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS} ${NET_HEADERS}
         ${PRIVATE_HEADERS}
         ${SOURCES} ${APPLE_SOURCES} ${POSIX_SOURCES} ${WIN_SOURCES}
 )

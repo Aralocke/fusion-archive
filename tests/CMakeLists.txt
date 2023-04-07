@@ -19,7 +19,12 @@ set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/public)
 
 add_executable(FusionTests)
-target_include_directories(FusionTests PUBLIC ${PROJECT_INCLUDE_DIR})
+target_include_directories(FusionTests
+    PUBLIC
+        ${PROJECT_INCLUDE_DIR}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../libraries/core/source/private
+)
 
 if(FUSION_MAIN_PROJECT)
     FSN_SET_TARGET_OUTPUT(FusionTests "${FUSION_BUILD_ROOT}/tests")
@@ -28,7 +33,11 @@ endif()
 file(GLOB_RECURSE PUBLIC_HEADERS ${PROJECT_INCLUDE_DIR} "*/public/*.h")
 
 if(MSVC)
-    source_group("Header Files//Public" FILES ${PUBLIC_HEADERS})
+    source_group(
+        TREE ${PROJECT_INCLUDE_DIR}/Fusion
+        PREFIX "Header Files\\Public"
+        FILES ${PUBLIC_HEADERS}
+    )
 endif()
 
 # Create the directory for the Source files
