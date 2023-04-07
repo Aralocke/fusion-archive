@@ -12,6 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(NetworkTool)
-add_subdirectory(playground)
-add_subdirectory(resolver)
+add_subdirectory(source)
