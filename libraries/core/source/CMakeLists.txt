@@ -52,11 +52,13 @@ set(PROJECT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/*.cpp")
 file(GLOB APPLE_SOURCES "${PROJECT_SOURCE_DIR}/platforms/apple/*.cpp")
 file(GLOB POSIX_SOURCES "${PROJECT_SOURCE_DIR}/platforms/posix/*.cpp")
+file(GLOB LOGGING_SOURCES "${PROJECT_SOURCE_DIR}/logging/*.cpp")
 file(GLOB WIN_SOURCES "${PROJECT_SOURCE_DIR}/platforms/windows/*.cpp")
 # Header Files
 file(GLOB HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/*.h")
 file(GLOB FWD_HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/Fwd/*.h")
 file(GLOB IMPL_HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/Impl/*.h")
+file(GLOB LOGGING_HEADERS "${PROJECT_INCLUDE_DIR}/Fusion/Logging/*.h")
 # Header files (Global)
 file(GLOB PRIVATE_HEADERS "${PROJECT_INTERNAL_DIR}/Fusion/Internal/*.h")
 
@@ -66,7 +68,7 @@ if(MSVC)
     source_group(
         TREE ${PROJECT_INCLUDE_DIR}/Fusion
         PREFIX "Header Files\\Public"
-        FILES ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS}
+        FILES ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS} ${LOGGING_HEADERS}
     )
     source_group(
         TREE ${PROJECT_INTERNAL_DIR}/Fusion/Internal
@@ -78,7 +80,7 @@ if(MSVC)
     source_group(
         TREE ${PROJECT_SOURCE_DIR}
         PREFIX "Source Files"
-        FILES ${SOURCES}
+        FILES ${SOURCES} ${LOGGING_SOURCES}
     )
     source_group(
         TREE ${PROJECT_SOURCE_DIR}/platforms
@@ -94,9 +96,10 @@ endif()
 #
 target_sources(Fusion
     PRIVATE
-        ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS}
+        ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS} ${LOGGING_HEADERS}
         ${PRIVATE_HEADERS}
         ${SOURCES} ${APPLE_SOURCES} ${POSIX_SOURCES} ${WIN_SOURCES}
+        ${LOGGING_SOURCES}
 )
 target_include_directories(Fusion
     PUBLIC
