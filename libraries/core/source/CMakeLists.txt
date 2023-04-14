@@ -140,6 +140,7 @@ if(WIN32)
 endif()
 
 list(APPEND fusion_link_targets
+    c-ares  # Used for async DNS lookups
     fmt     # fmtlib for logging
 )
 

@@ -30,6 +30,28 @@ function(FUSION_INIT_GIT_SUBMODULE DIRECTORY)
 endfunction()
 
 ################################
+# C-Ares
+################################
+
+FUSION_INIT_GIT_SUBMODULE(c-ares)
+
+set(CARES_STATIC ON CACHE INTERNAL "")
+set(CARES_SHARED OFF CACHE INTERNAL "")
+set(CARES_INSTALL OFF CACHE INTERNAL "")
+set(CARES_STATIC_PIC ON CACHE INTERNAL "")
+set(CARES_BUILD_TOOLS OFF CACHE INTERNAL "")
+
+add_subdirectory(c-ares EXCLUDE_FROM_ALL)
+
+# GoogleTest comes with 4 solutions and we want to group
+# them into their own folder.
+set_property(TARGET c-ares PROPERTY FOLDER "External")
+
+if(FUSION_MAIN_PROJECT)
+    FSN_SET_TARGET_OUTPUT(c-ares "${FUSION_BUILD_ROOT}/external")
+endif()
+
+################################
 # GoogleTest
 ################################
 
