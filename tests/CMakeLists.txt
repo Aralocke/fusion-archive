@@ -19,7 +19,12 @@ set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/public)
 
 add_executable(FusionTests)
-target_include_directories(FusionTests PUBLIC ${PROJECT_INCLUDE_DIR})
+target_include_directories(FusionTests
+    PUBLIC
+        ${PROJECT_INCLUDE_DIR}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../libraries/core/source/private
+)
 
 if(FUSION_MAIN_PROJECT)
     FSN_SET_TARGET_OUTPUT(FusionTests "${FUSION_BUILD_ROOT}/tests")
@@ -47,4 +52,8 @@ target_link_libraries(FusionTests
 if(MSVC)
     # Set the folder for the executable
     set_property(TARGET FusionTests PROPERTY FOLDER "Tests")
+endif()
+
+if(FUSION_MAIN_PROJECT)
+    add_subdirectory(benchmarks)
 endif()
