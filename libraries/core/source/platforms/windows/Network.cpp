@@ -43,6 +43,69 @@ Internal::WSAInitializer::~WSAInitializer()
 }
 // WSAInitializer                                            END
 // -------------------------------------------------------------
+// GetLastNetworkError                                     START
+Failure Internal::GetLastNetworkFailure()
+{
+    const int err = WSAGetLastError();
+
+    switch (err)
+    {
+    case ERROR_SUCCESS:
+        return E_SUCCESS;
+    case EAI_FAIL:
+    case EAI_NONAME:
+    case WSAENOTCONN:
+        return E_FAILURE(err);
+    case WSAEACCES:
+        return E_ACCESS_DENIED(err);
+    case EAI_MEMORY:
+    case WSAEMFILE:
+    case WSAENOBUFS:
+        return E_INSUFFICIENT_RESOURCES(err);
+    case WSAEINTR:
+        return E_INTERRUPTED(err);
+    case ERROR_INVALID_PARAMETER:
+    case WSATYPE_NOT_FOUND:  // EAI_SERVICE
+    case WSAEBADF:
+    case WSAEFAULT:
+    case WSAEINVAL:  // EAI_BADFLAGS
+    case WSAENOTSOCK:
+    case WSAEAFNOSUPPORT:  // EAI_FAMILY
+    case WSAEOPNOTSUPP:
+    case WSAEPROTONOSUPPORT:  // EAI_SOCKTYPE
+    case WSAEPROTOTYPE:
+    case WSAESOCKTNOSUPPORT:
+        return E_INVALID_ARGUMENT(err);
+    case WSAEISCONN:
+        return E_NET_CONNECTED(err);
+    case WSAETIMEDOUT:
+    case WSAECONNABORTED:
+    case WSAENETUNREACH:
+    case WSAEHOSTUNREACH:
+        return E_NET_CONN_ABORTED(err);
+    case WSAECONNREFUSED:
+        return E_NET_CONN_REFUSED(err);
+    case WSAECONNRESET:
+        return E_NET_CONN_RESET(err);
+    case WSAEALREADY:
+        return E_NET_INPROGRESS(err);
+    case WSAENETDOWN:
+        return E_NET_NETWORK_DOWN(err);
+    case WSAEWOULDBLOCK:
+        return E_NET_WOULD_BLOCK(err);
+    case WSAESHUTDOWN:
+    case WSANOTINITIALISED:
+        return E_NOT_INITIALIZED(err);
+    case WSAEADDRINUSE:
+    case WSAEADDRNOTAVAIL:
+        return E_RESOURCE_NOT_AVAILABLE(err);
+    case EAI_AGAIN:
+        return E_NET_AGAIN(err);
+    }
+    return Failure{ err };
+}
+// GetLastNetworkError                                       END
+// -------------------------------------------------------------
 // PollFlags                                               START
 int32_t Internal::GetPollFlags(PollFlags flags)
 {

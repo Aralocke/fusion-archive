@@ -126,6 +126,12 @@ AddressFamily GetAddressFamily(int32_t family);
 int32_t GetAddressInfoFlags(AddressInfoFlags flags);
 
 //
+// Return the current error code as a converted Failure type with an
+// underlying Error object filled in.
+//
+Failure GetLastNetworkFailure();
+
+//
 // Map MessageOption values to their platform specific values represented
 // by an integer.
 //

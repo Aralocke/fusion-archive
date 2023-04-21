@@ -214,6 +214,27 @@ constexpr static const Error E_INTERRUPTED{ 8, "E_INTERRUPTED" };
 //
 //
 constexpr static const Error E_RESOURCE_NOT_AVAILABLE{ 9, "E_RESOURCE_NOT_AVAILABLE" };
+
+//
+//
+//
+constexpr static const Error E_NOT_INITIALIZED{ 10, "E_NOT_INITIALIZED" };
+
+//
+//
+//
+constexpr static const Error E_NOT_IMPLEMENTED{ 11, "E_NOT_IMPLEMENTED" };
+
+//
+//
+//
+constexpr static const Error E_NOT_SUPPORTED{ 12, "E_NOT_SUPPORTED" };
+
+//
+//
+//
+constexpr static const Error E_CANCELLED{ 13, "E_CANCELLED" };
+
 //
 //
 //

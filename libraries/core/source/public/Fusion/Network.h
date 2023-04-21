@@ -18,6 +18,7 @@
 
 #include <Fusion/Fwd/Network.h>
 #include <Fusion/Enum.h>
+#include <Fusion/Result.h>
 #include <iosfwd>
 #include <string_view>
 namespace Fusion
@@ -521,6 +522,66 @@ constexpr const SocketConfig UDPv4 = UDP(AddressFamily::Inet4);
 //
 //
 constexpr const SocketConfig UDPv6 = UDP(AddressFamily::Inet6);
+
+//
+//
+//
+constexpr const Error E_NET_INPROGRESS{ 100, "E_NET_INPROGRESS" };
+
+//
+//
+//
+constexpr const Error E_NET_AGAIN{ 101, "E_NET_AGAIN" };
+
+//
+//
+//
+constexpr const Error E_NET_WOULD_BLOCK{ 102, "E_NET_WOULD_BLOCK" };
+
+//
+//
+//
+constexpr const Error E_NET_NETWORK_DOWN{ 103, "E_NET_NETWORK_DOWN" };
+
+//
+//
+//
+constexpr const Error E_NET_CONN_ABORTED{ 104, "E_NET_CONN_ABORTED" };
+
+//
+//
+//
+constexpr const Error E_NET_CONN_REFUSED{ 105, "E_NET_CONN_REFUSED" };
+
+//
+//
+//
+constexpr const Error E_NET_CONN_RESET{ 106, "E_NET_CONN_RESET" };
+
+//
+//
+//
+constexpr const Error E_NET_CONNECTED{ 107, "E_NET_CONNECTED" };
+
+//
+//
+//
+constexpr const Error E_NET_DISCONNECTED{ 108, "E_NET_DISCONNECTED" };
+
+//
+//
+//
+constexpr const Error E_NET_TIMEOUT{ 109, "E_NET_TIMEOUT" };
+
+//
+//
+//
+constexpr const Error E_NET_UNSUPPORTED{ 110, "E_NET_UNSUPPORTED" };
+
+//
+//
+//
+constexpr const Error E_NET_SIZE_EXCEEDED{ 111, "E_NET_SIZE_EXCEEDED" };
 
 }  // namespace Fusion
 
