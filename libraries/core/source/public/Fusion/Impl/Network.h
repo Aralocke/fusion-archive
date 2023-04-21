@@ -111,6 +111,15 @@ std::string_view ToString(
 {
     return ToString(address, buffer, LENGTH);
 }
+
+template<size_t LENGTH>
+std::string_view ToString(
+    const SocketAddress& address,
+    char(&buffer)[LENGTH])
+{
+    return ToString(address, buffer, LENGTH);
+}
+
 }  // namespace Fusion
 
 template<>
@@ -199,6 +208,21 @@ struct fmt::formatter<Fusion::PollFlags>
     {
         return formatter<std::string>::format(
             Fusion::FlagsToString(flags),
+            ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<Fusion::SocketAddress>
+    : fmt::formatter<std::string>
+{
+    template<typename Context>
+    auto format(
+        const Fusion::SocketAddress& address,
+        Context& ctx)
+    {
+        return formatter<std::string>::format(
+            Fusion::ToString(address),
             ctx);
     }
 };

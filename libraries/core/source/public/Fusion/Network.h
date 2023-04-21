@@ -19,8 +19,11 @@
 #include <Fusion/Fwd/Network.h>
 #include <Fusion/Enum.h>
 #include <Fusion/Result.h>
+
+#include <array>
 #include <iosfwd>
 #include <string_view>
+#include <variant>
 namespace Fusion
 {
 //
@@ -860,6 +863,171 @@ struct ParsedAddress
 //
 //
 Result<ParsedAddress> ParseAddress(std::string_view address);
+
+//
+//
+//
+class SocketAddress final
+{
+public:
+    //
+    //
+    //
+    struct InetAddr
+    {
+        InetAddress address;
+        uint16_t port = 0;
+    };
+
+    //
+    //
+    //
+    const InetAddr& Inet() const;
+
+    //
+    //
+    //
+    InetAddr& Inet();
+
+    //
+    //
+    //
+    struct Inet6Addr
+    {
+        Inet6Address address;
+        uint16_t port = 0;
+        uint32_t flowInfo = 0;
+        uint32_t scope = 0;
+    };
+
+    //
+    //
+    //
+    const Inet6Addr& Inet6() const;
+
+    //
+    //
+    //
+    Inet6Addr& Inet6();
+
+    //
+    //
+    //
+    struct UnixAddr
+    {
+        static const uint8_t LENGTH = 108U;
+
+        char path[LENGTH + 1] = { 0 };
+    };
+
+    //
+    //
+    //
+    const UnixAddr& Unix() const;
+
+    //
+    //
+    //
+    UnixAddr& Unix();
+
+public:
+    SocketAddress() = default;
+
+    //
+    //
+    //
+    SocketAddress(
+        InetAddress address,
+        uint32_t port);
+
+    //
+    //
+    //
+    SocketAddress(
+        Inet6Address address,
+        uint32_t port);
+
+    //
+    //
+    //
+    AddressFamily Family() const;
+
+    //
+    //
+    //
+    void FromSockAddr(const sockaddr* addr);
+
+    //
+    //
+    //
+    Result<void> FromString(std::string_view address);
+
+    //
+    //
+    //
+    bool IsEmpty() const;
+
+    //
+    //
+    //
+    operator bool() const;
+
+    //
+    //
+    //
+    bool IsValid() const;
+
+    //
+    //
+    //
+    sockaddr* ToSockAddr(
+        void* address,
+        size_t& length) const;
+
+public:
+    bool operator==(const SocketAddress& saddr) const;
+    bool operator!=(const SocketAddress& saddr) const;
+    bool operator<(const SocketAddress& saddr) const;
+
+private:
+    using AddressData = std::variant<
+        std::monostate,
+        InetAddr,
+        Inet6Addr,
+        UnixAddr>;
+
+    AddressData m_address;
+    AddressFamily m_family{ AddressFamily::None };
+};
+
+//
+//
+//
+std::string ToString(const SocketAddress& address);
+
+//
+//
+//
+std::string_view ToString(
+    const SocketAddress& address,
+    char* buffer,
+    size_t length);
+
+//
+//
+//
+template<size_t LENGTH>
+std::string_view ToString(
+    const SocketAddress& address,
+    char(&buffer)[LENGTH]);
+
+//
+//
+//
+std::ostream& operator<<(
+    std::ostream& o,
+    const SocketAddress& address);
+
 
 }  // namespace Fusion
 

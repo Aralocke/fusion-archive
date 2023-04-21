@@ -17,6 +17,7 @@
 #include <Fusion/Internal/Network.h>
 
 #include <Fusion/Assert.h>
+#include <Fusion/Endian.h>
 #include <Fusion/Memory.h>
 #include <Fusion/MemoryUtil.h>
 #include <Fusion/StringUtil.h>
@@ -1045,4 +1046,444 @@ Result<ParsedAddress> ParseAddress(std::string_view address)
         .WithContext("unable to parse address '{}'", address);
 }
 // ParseAddress                                              END
+// -------------------------------------------------------------
+// SocketAddress                                           START
+SocketAddress::SocketAddress(InetAddress addr, uint32_t port)
+    : m_family(AddressFamily::Inet4)
+    , m_address(std::in_place_type<InetAddr>, addr, uint16_t(port))
+{ }
+
+SocketAddress::SocketAddress(Inet6Address addr, uint32_t port)
+    : m_family(AddressFamily::Inet6)
+    , m_address(std::in_place_type<Inet6Addr>, addr, uint16_t(port))
+{ }
+
+AddressFamily SocketAddress::Family() const
+{
+    return m_family;
+}
+
+void SocketAddress::FromSockAddr(const sockaddr* addr)
+{
+    using namespace Internal;
+
+    m_family = GetAddressFamily(addr->sa_family);
+
+    switch (m_family)
+    {
+    case AddressFamily::Inet4:
+    {
+        InetAddr inet;
+
+        const auto& in = *reinterpret_cast<const sockaddr_in*>(addr);
+        inet.port = ntohs(in.sin_port);
+
+        const auto* bytes = reinterpret_cast<const uint8_t*>(
+            &(in.sin_addr.s_addr));
+
+        inet.address.Assign(bytes);
+        m_address = inet;
+
+        break;
+    }
+    case AddressFamily::Inet6:
+    {
+        Inet6Addr inet6;
+
+        const auto& in6 = *reinterpret_cast<const sockaddr_in6*>(addr);
+        inet6.port = ntohs(in6.sin6_port);
+
+        inet6.flowInfo = BigEndian<uint32_t>::Load(
+            reinterpret_cast<const uint32_t*>(&in6.sin6_flowinfo));
+        inet6.scope = BigEndian<uint32_t>::Load(
+            reinterpret_cast<const uint32_t*>(&in6.sin6_scope_id));
+
+        const auto* bytes = reinterpret_cast<const uint8_t*>(
+            &(in6.sin6_addr.s6_addr));
+
+        inet6.address.Assign(bytes);
+        m_address = inet6;
+
+        break;
+    }
+    case AddressFamily::Unix:
+    {
+#if FUSION_PLATFORM_POSIX
+        UnixAddr unAddr;
+
+        const auto& un = *reinterpret_cast<const sockaddr_un*>(addr);
+        auto* a = unAddr.path.data();
+        size_t length = unAddr.path.size();
+
+        memset(a, 0, length);
+        memcpy(a, un.sun_path, length);
+
+        m_data = unAddr;
+#else
+        FUSION_ASSERT(false, "Platform does not support UNIX sockets");
+#endif  // FUSION_PLATFORM_POSIX
+        break;
+    }
+    default:
+        FUSION_ASSERT(false, "Unsupported address family");
+        break;
+    }
+}
+
+Result<void> SocketAddress::FromString(std::string_view address)
+{
+    if (address.empty())
+    {
+        return Failure(E_INVALID_ARGUMENT)
+            .WithContext("empty socket address");
+    }
+
+    uint16_t port = 0;
+
+    if (auto colon = address.find(':'); colon != std::string_view::npos)
+    {
+        auto in = address.substr(colon + 1);
+        auto result = StringUtil::ParseNumber<uint16_t>(in, port);
+
+        if (!result)
+        {
+            return result.Error();
+        }
+
+        port = *result;
+        address = address.substr(0, colon);
+    }
+
+    Result<ParsedAddress> result = ParseAddress(address);
+
+    if (!result)
+    {
+        return result.Error();
+    }
+
+    switch (result->family)
+    {
+    case AddressFamily::Inet4:
+    {
+        InetAddr& inet = Inet();
+
+        m_family = AddressFamily::Inet4;
+        inet.port = port;
+        inet.address = result->address.inet;
+        break;
+    }
+    case AddressFamily::Inet6:
+    {
+        Inet6Addr& inet6 = Inet6();
+
+        inet6.port = port;
+        inet6.flowInfo = 0;  // TODO: Fill out these fields at a later
+        inet6.scope = 0;     //       date once the parsing cleans up.
+        inet6.address = result->address.inet6;
+        break;
+    }
+    default:
+        return Failure(E_INVALID_ARGUMENT)
+            .WithContext("unable to parse '{}' to an inet4 or inet6 address", address);
+    }
+
+    return Success;
+}
+
+SocketAddress::InetAddr& SocketAddress::Inet()
+{
+    return std::get<InetAddr>(m_address);
+}
+
+const SocketAddress::InetAddr& SocketAddress::Inet() const
+{
+    return std::get<InetAddr>(m_address);
+}
+
+SocketAddress::Inet6Addr& SocketAddress::Inet6()
+{
+    return std::get<Inet6Addr>(m_address);
+}
+
+const SocketAddress::Inet6Addr& SocketAddress::Inet6() const
+{
+    return std::get<Inet6Addr>(m_address);
+}
+
+bool SocketAddress::IsEmpty() const
+{
+    if (IsValid())
+    {
+        return false;
+    }
+
+    switch (m_family)
+    {
+    case AddressFamily::Inet4:
+        return !Inet().address.IsEmpty();
+    case AddressFamily::Inet6:
+        return !Inet6().address.IsEmpty();
+    case AddressFamily::Unix:
+        return Unix().path[0] == 0;
+    default:
+        return Failure(E_INVALID_ARGUMENT)
+            .WithContext("Unsupported address family: {}", m_family);
+    }
+
+    return true;
+}
+
+SocketAddress::operator bool() const
+{
+    return !IsEmpty();
+}
+
+bool SocketAddress::IsValid() const
+{
+    return m_family != AddressFamily::None;
+}
+
+sockaddr* SocketAddress::ToSockAddr(void* input, size_t& len) const
+{
+    using namespace Internal;
+
+    if (!input || len == 0)
+    {
+        return nullptr;
+    }
+
+    auto* addr = reinterpret_cast<sockaddr*>(input);
+    size_t length = len;
+
+    switch (m_family)
+    {
+    case AddressFamily::Inet4:
+    {
+        if (length < ADDR4_SOCKLEN)
+        {
+            return nullptr;
+        }
+
+        len = ADDR4_SOCKLEN;
+        const InetAddr& inet = Inet();
+
+        auto& in = *reinterpret_cast<sockaddr_in*>(addr);
+        memset(&in, 0, ADDR4_SOCKLEN);
+
+        in.sin_family = GetAddressFamily(AddressFamily::Inet4);
+
+        memcpy(&in.sin_addr, inet.address.Data(), InetAddress::SIZE);
+
+        in.sin_port = htons(inet.port);
+        break;
+    }
+    case AddressFamily::Inet6:
+    {
+        if (length < ADDR6_SOCKLEN)
+        {
+            return nullptr;
+        }
+
+        len = ADDR6_SOCKLEN;
+        const Inet6Addr& inet6 = Inet6();
+
+        auto& in6 = *reinterpret_cast<sockaddr_in6*>(addr);
+        memset(&in6, 0, ADDR6_SOCKLEN);
+
+        in6.sin6_family = GetAddressFamily(AddressFamily::Inet6);
+        in6.sin6_port = htons(inet6.port);
+
+        BigEndian<uint32_t>::Store(
+            reinterpret_cast<uint32_t*>(&in6.sin6_flowinfo),
+            inet6.flowInfo);
+
+        BigEndian<uint32_t>::Store(
+            reinterpret_cast<uint32_t*>(&in6.sin6_scope_id),
+            inet6.scope);
+
+        memcpy(
+            &in6.sin6_addr,
+            inet6.address.Data(),
+            Inet6Address::SIZE);
+
+        break;
+    }
+    case AddressFamily::Unix:
+    {
+#if FUSION_PLATFORM_POSIX
+        if (length < ADDRUNIX_SOCKLEN)
+        {
+            return nullptr;
+        }
+
+        len = ADDRUNIX_SOCKLEN;
+        const UnixAddr& unData = Unix();
+
+        auto& un = *reinterpret_cast<sockaddr_un*>(addr);
+        memset(&un, 0, ADDRUNIX_SOCKLEN);
+
+        un.sun_family = GetAddressFamily(AddressFamily::Unix);
+        static_assert(UnixAddr::LENGTH <= sizeof(un.sun_path),
+            "SocketAddress::UNIX_LEN is too large to fit in sockaddr_un.sun_path");
+
+        memcpy(un.sun_path, unData.path, UnixAddr::LENGTH);
+#else
+        FUSION_ASSERT(false, "Platform does not support UNIX sockets");
+#endif // FUSION_PLATFORM_POSIX
+        break;
+    }
+    default:
+    {
+        addr = nullptr;
+        len = 0;
+
+        FUSION_ASSERT(false, "Unsupported address family");
+        break;
+    }
+    }
+
+    return addr;
+}
+
+SocketAddress::UnixAddr& SocketAddress::Unix()
+{
+    return std::get<UnixAddr>(m_address);
+}
+
+const SocketAddress::UnixAddr& SocketAddress::Unix() const
+{
+    return std::get<UnixAddr>(m_address);
+}
+
+bool SocketAddress::operator==(const SocketAddress& saddr) const
+{
+    if (m_family == saddr.m_family)
+    {
+        switch (m_family)
+        {
+        case AddressFamily::Inet4:
+            return Inet().port == saddr.Inet().port
+                && MemoryUtil::Equal(
+                    Inet().address.Data(),
+                    saddr.Inet().address.Data(),
+                    InetAddress::SIZE);
+        case AddressFamily::Inet6:
+            return Inet6().port == saddr.Inet6().port
+                && MemoryUtil::Equal(
+                    Inet6().address.Data(),
+                    saddr.Inet6().address.Data(),
+                    Inet6Address::SIZE);
+        case AddressFamily::Unix:
+            return MemoryUtil::Equal(
+                Unix().path,
+                saddr.Unix().path,
+                UnixAddr::LENGTH);
+        default:
+            return false;
+        }
+    }
+    return false;
+}
+
+bool SocketAddress::operator!=(const SocketAddress& saddr) const
+{
+    return !operator==(saddr);
+}
+
+bool SocketAddress::operator<(const SocketAddress& saddr) const
+{
+    if (m_family == saddr.m_family)
+    {
+        switch (m_family)
+        {
+        case AddressFamily::Inet4:
+            return Inet().port == saddr.Inet().port
+                && MemoryUtil::Less(
+                    Inet().address.Data(),
+                    saddr.Inet().address.Data(),
+                    InetAddress::SIZE);
+        case AddressFamily::Inet6:
+            return Inet6().port == saddr.Inet6().port
+                && MemoryUtil::Less(
+                    Inet6().address.Data(),
+                    saddr.Inet6().address.Data(),
+                    Inet6Address::SIZE);
+        case AddressFamily::Unix:
+            return MemoryUtil::Less(
+                Unix().path,
+                saddr.Unix().path,
+                UnixAddr::LENGTH);
+        default:
+            return false;
+        }
+    }
+    return false;
+}
+
+std::string ToString(const SocketAddress& address)
+{
+    switch (address.Family())
+    {
+    case AddressFamily::Inet4:
+    {
+        return fmt::format(FMT_STRING("[{}]:{}"),
+            address.Inet().address,
+            address.Inet().port);
+    }
+    case AddressFamily::Inet6:
+    {
+        return fmt::format(FMT_STRING("[{}]:{}"),
+            address.Inet6().address,
+            address.Inet6().port);
+    }
+    case AddressFamily::Unix:
+    {
+        return fmt::format(FMT_STRING("unix://{}"),
+            address.Unix().path);
+    }
+    default:
+        return {};
+    }
+}
+
+std::string_view ToString(
+    const SocketAddress& address,
+    char* buffer,
+    size_t len)
+{
+    switch (address.Family())
+    {
+    case AddressFamily::Inet4:
+    {
+        fmt::format_to_n(buffer, len, FMT_STRING("[{}]:{}"),
+            address.Inet().address,
+            address.Inet().port);
+        break;
+    }
+    case AddressFamily::Inet6:
+    {
+        fmt::format_to_n(buffer, len, FMT_STRING("[{}]:{}"),
+            address.Inet6().address,
+            address.Inet6().port);
+        break;
+    }
+    case AddressFamily::Unix:
+    {
+        fmt::format_to_n(buffer, len, FMT_STRING("unix://{}"),
+            address.Unix().path);
+        break;
+    }
+    default:
+        return {};
+    }
+    return { buffer };
+}
+
+std::ostream& operator<<(
+    std::ostream& o,
+    const SocketAddress& address)
+{
+    return o << ToString(address);
+}
+// SocketAddress                                             END
 }  // namespace Fusion

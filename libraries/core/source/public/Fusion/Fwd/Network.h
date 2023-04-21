@@ -51,4 +51,5 @@ struct ParsedAddress;
 class InetAddress;
 class Inet6Address;
 class SocketConfig;
+class SocketAddress;
 }  // namespace Fusion
