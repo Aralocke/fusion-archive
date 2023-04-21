@@ -458,6 +458,70 @@ std::ostream& operator<<(
     std::ostream& o,
     SocketType type);
 
+//
+//
+//
+class SocketConfig final
+{
+public:
+    AddressFamily family{ AddressFamily::Unspecified };
+    SocketProtocol protocol{ SocketProtocol::None };
+    SocketType type{ SocketType::None };
+
+public:
+    constexpr SocketConfig(
+        AddressFamily family,
+        SocketProtocol protocol,
+        SocketType type)
+        : family(family)
+        , protocol(protocol)
+        , type(type)
+    { }
+
+    constexpr SocketConfig operator()(AddressFamily family) const
+    {
+        return SocketConfig(family, protocol, type);
+    }
+};
+
+//
+//
+//
+constexpr const SocketConfig TCP{
+    AddressFamily::Unspecified,
+    SocketProtocol::Tcp,
+    SocketType::Stream
+};
+
+//
+//
+//
+constexpr const SocketConfig TCPv4 = TCP(AddressFamily::Inet4);
+
+//
+//
+//
+constexpr const SocketConfig TCPv6 = TCP(AddressFamily::Inet6);
+
+//
+//
+//
+constexpr const SocketConfig UDP{
+    AddressFamily::Unspecified,
+    SocketProtocol::Udp,
+    SocketType::Datagram
+};
+
+//
+//
+//
+constexpr const SocketConfig UDPv4 = UDP(AddressFamily::Inet4);
+
+//
+//
+//
+constexpr const SocketConfig UDPv6 = UDP(AddressFamily::Inet6);
+
 }  // namespace Fusion
 
 #define FUSION_IMPL_NETWORK 1

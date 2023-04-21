@@ -44,4 +44,6 @@ using Socket = int;
 #endif
 
 constexpr Socket INVALID_SOCKET = Socket(-1);
+
+class SocketConfig;
 }  // namespace Fusion
