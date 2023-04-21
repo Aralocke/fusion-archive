@@ -583,6 +583,284 @@ constexpr const Error E_NET_UNSUPPORTED{ 110, "E_NET_UNSUPPORTED" };
 //
 constexpr const Error E_NET_SIZE_EXCEEDED{ 111, "E_NET_SIZE_EXCEEDED" };
 
+//
+//
+//
+class InetAddress final
+{
+public:
+    static const uint8_t LENGTH = 16;
+    static const uint8_t SIZE = 4;
+
+public:
+    InetAddress() = default;
+
+    //
+    //
+    //
+    constexpr InetAddress(std::array<uint8_t, SIZE> address)
+        : m_address(address)
+    { }
+
+    //
+    //
+    //
+    Result<void> FromDecimal(uint32_t address);
+
+    //
+    //
+    //
+    Result<void> FromString(std::string_view address);
+
+    //
+    //
+    //
+    void Assign(const void* address);
+
+    //
+    //
+    //
+    Inet6Address AsV6() const;
+
+    //
+    //
+    //
+    operator Inet6Address() const;
+
+    //
+    //
+    //
+    const uint8_t* Data() const;
+
+    //
+    //
+    //
+    uint8_t* Data();
+
+    //
+    //
+    //
+    bool IsEmpty() const;
+
+    //
+    //
+    //
+    operator bool() const;
+
+    //
+    //
+    //
+    bool IsPrivate() const;
+
+    //
+    //
+    //
+    uint32_t ToDecimal() const;
+
+public:
+    bool operator==(const InetAddress& addr) const;
+    bool operator!=(const InetAddress& addr) const;
+    bool operator<(const InetAddress& addr) const;
+
+private:
+    std::array<uint8_t, SIZE> m_address;
+};
+
+//
+//
+//
+std::string ToString(const InetAddress& address);
+
+//
+//
+//
+std::string_view ToString(
+    const InetAddress& address,
+    char* buffer,
+    size_t length);
+
+//
+//
+//
+template<size_t LENGTH>
+std::string_view ToString(
+    const InetAddress& address,
+    char(&buffer)[LENGTH]);
+
+//
+//
+//
+std::ostream& operator<<(
+    std::ostream& o,
+    const InetAddress& address);
+
+//
+//
+//
+constexpr const InetAddress InaddrAny{ { 0, 0, 0, 0 } };
+
+//
+//
+//
+constexpr const InetAddress InaddrLoopback{ { 127, 0, 0, 1 } };
+
+//
+//
+//
+constexpr const InetAddress InaddrBroadcast{ { 255, 255, 255, 255 } };
+
+//
+//
+//
+class Inet6Address final
+{
+public:
+    static const uint8_t LENGTH = 64;
+    static const uint8_t SIZE = 16;
+
+public:
+    Inet6Address() = default;
+
+    constexpr Inet6Address(std::array<uint8_t, SIZE> address)
+        : m_address(address)
+    { }
+
+    //
+    //
+    //
+    Result<void> FromString(std::string_view address);
+
+    //
+    //
+    //
+    void Assign(const void* address);
+
+    //
+    //
+    //
+    InetAddress AsV4() const;
+
+    //
+    //
+    //
+    operator InetAddress() const;
+
+    //
+    //
+    //
+    const uint8_t* Data() const;
+
+    //
+    //
+    //
+    uint8_t* Data();
+
+    //
+    //
+    //
+    bool IsEmpty() const;
+
+    //
+    //
+    //
+    operator bool() const;
+
+    //
+    //
+    //
+    bool IsMappedV4() const;
+
+    //
+    //
+    //
+    bool IsPrivate() const;
+
+public:
+    bool operator==(const Inet6Address& addr) const;
+    bool operator!=(const Inet6Address& addr) const;
+    bool operator<(const Inet6Address& addr) const;
+
+private:
+    std::array<uint8_t, SIZE> m_address;
+};
+
+//
+//
+//
+std::string ToString(
+    const Inet6Address& address);
+
+//
+//
+//
+std::string_view ToString(
+    const Inet6Address& address,
+    char* buffer,
+    size_t length);
+
+//
+//
+//
+template<size_t LENGTH>
+std::string_view ToString(
+    const Inet6Address& address,
+    char(&buffer)[LENGTH]);
+
+//
+//
+//
+std::ostream& operator<<(
+    std::ostream& o,
+    const Inet6Address& address);
+
+//
+//
+//
+constexpr const Inet6Address InaddrLoopback6 = { {
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    1
+} };
+
+//
+//
+//
+constexpr const Inet6Address InaddrLoopback6in4 = { {
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0xff, 0xff, 127, 0, 0, 1
+} };
+
+//
+//
+//
+struct MulticastGroup
+{
+    InetAddress address;
+    InetAddress interface;
+};
+
+//
+//
+//
+struct ParsedAddress
+{
+    union Address
+    {
+        InetAddress inet;
+        Inet6Address inet6;
+    };
+
+    Address address;
+    AddressFamily family{ AddressFamily::Unspecified };
+};
+
+//
+//
+//
+Result<ParsedAddress> ParseAddress(std::string_view address);
+
 }  // namespace Fusion
 
 #define FUSION_IMPL_NETWORK 1

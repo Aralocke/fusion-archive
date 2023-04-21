@@ -17,6 +17,8 @@
 #include <Fusion/Internal/Network.h>
 
 #include <Fusion/Assert.h>
+#include <Fusion/Memory.h>
+#include <Fusion/MemoryUtil.h>
 #include <Fusion/StringUtil.h>
 
 #include <iostream>
@@ -737,4 +739,310 @@ std::ostream& operator<<(std::ostream& o, SocketType type)
     return o << ToString(type);
 }
 // SocketType                                                END
+// -------------------------------------------------------------
+// InetAddress                                             START
+Result<void> InetAddress::FromDecimal(uint32_t address)
+{
+    m_address[0] = (address >> 24) & 0xff;
+    m_address[1] = (address >> 16) & 0xff;
+    m_address[2] = (address >> 8) & 0xff;
+    m_address[3] = address & 0xff;
+
+    return Success;
+}
+
+Result<void> InetAddress::FromString(std::string_view address)
+{
+    using namespace Internal;
+
+    if (address.empty()
+        || address.size() < 7U
+        || address.size() > InetAddress::LENGTH)
+    {
+        return Failure(E_INVALID_ARGUMENT)
+            .WithContext("invalid input address '{}'", address);
+    }
+
+    struct sockaddr_in saddr;
+    memset(&saddr, 0, ADDR4_SOCKLEN);
+
+    std::string str(address);
+
+    if (inet_pton(AF_INET, str.c_str(), &(saddr.sin_addr)) == 1)
+    {
+        const auto* bytes = reinterpret_cast<const uint8_t*>(
+            &(saddr.sin_addr.s_addr));
+        memcpy(Data(), bytes, InetAddress::SIZE);
+        return Success;
+    }
+
+    return Failure(E_INVALID_ARGUMENT)
+        .WithContext("failed to convert '{}' to an inet address", address);
+}
+
+void InetAddress::Assign(const void* address)
+{
+    memset(Data(), 0, InetAddress::SIZE);
+    memcpy(Data(), address, InetAddress::SIZE);
+}
+
+Inet6Address InetAddress::AsV6() const
+{
+    if (IsEmpty())
+    {
+        return {};
+    }
+
+    Inet6Address address;
+    {
+        uint8_t* addr = address.Data();
+
+        addr[10] = 0xff;
+        addr[11] = 0xff;
+        addr[12] = m_address[0];
+        addr[13] = m_address[1];
+        addr[14] = m_address[2];
+        addr[15] = m_address[3];
+    }
+    return address;
+}
+
+InetAddress::operator Inet6Address() const
+{
+    return AsV6();
+}
+
+const uint8_t* InetAddress::Data() const
+{
+    return m_address.data();
+}
+
+uint8_t* InetAddress::Data()
+{
+    return m_address.data();
+}
+
+bool InetAddress::IsEmpty() const
+{
+    return std::all_of(begin(m_address), end(m_address),
+        [](auto u) { return u == 0; });
+}
+
+InetAddress::operator bool() const
+{
+    return !IsEmpty();
+}
+
+bool InetAddress::IsPrivate() const
+{
+    // 127.0.0.0
+    // RFC1918 255.0.0.0
+    // RFC1918 255.240.0.0
+    // RFC1918 and RFC3927 255.255.0.0
+
+    // RFC1918 10.0.0.0
+    // RFC1918 172.16.0.0
+    // RFC1918 192.168.0.0
+    // RFC3927 169.254.0.0
+    return false;
+}
+
+uint32_t InetAddress::ToDecimal() const
+{
+    return (uint32_t(m_address[0]) << 24U)
+        + (uint32_t(m_address[1]) << 16U)
+        + (uint32_t(m_address[2]) << 8U)
+        + (uint32_t(m_address[3]));
+}
+
+bool InetAddress::operator==(const InetAddress& addr) const
+{
+    return MemoryUtil::Equal(Data(), addr.Data(), SIZE);
+}
+
+bool InetAddress::operator!=(const InetAddress& addr) const
+{
+    return !MemoryUtil::Equal(Data(), addr.Data(), SIZE);
+}
+
+bool InetAddress::operator<(const InetAddress& addr) const
+{
+    return MemoryUtil::Less(Data(), addr.Data(), SIZE);
+}
+
+std::string ToString(const InetAddress& address)
+{
+    char buffer[InetAddress::LENGTH + 1] = { 0 };
+    std::string_view result = ToString(
+        address,
+        buffer,
+        InetAddress::LENGTH);
+
+    return std::string{ result };
+}
+
+std::ostream& operator<<(std::ostream& o, const InetAddress& address)
+{
+    return o << ToString(address);
+}
+// InetAddress                                               END
+// -------------------------------------------------------------
+// Inet6Address
+Result<void> Inet6Address::FromString(std::string_view address)
+{
+    using namespace Internal;
+
+    if (address.empty()
+        || address.size() < 3U
+        || address.size() > Inet6Address::LENGTH)
+    {
+        return Failure(E_INVALID_ARGUMENT)
+            .WithContext("invalid input address '{}'", address);
+    }
+
+    struct sockaddr_in6 saddr;
+    memset(&saddr, 0, ADDR6_SOCKLEN);
+
+    std::string str(address);
+
+    if (inet_pton(AF_INET6, str.c_str(), &(saddr.sin6_addr)) == 1)
+    {
+        const auto* bytes = reinterpret_cast<const uint8_t*>(
+            &(saddr.sin6_addr.s6_addr));
+
+        memcpy(Data(), bytes, SIZE);
+        return Success;
+    }
+
+    return Failure(E_INVALID_ARGUMENT)
+        .WithContext("failed to convert '{}' to an inet6 address", address);
+}
+
+void Inet6Address::Assign(const void* address)
+{
+    memset(Data(), 0, Inet6Address::SIZE);
+    memcpy(Data(), address, Inet6Address::SIZE);
+}
+
+InetAddress Inet6Address::AsV4() const
+{
+    if (IsEmpty() || !IsMappedV4())
+    {
+        return InetAddress{};
+    }
+
+    InetAddress address;
+    {
+        uint8_t* addr = address.Data();
+
+        addr[0] = m_address[12];
+        addr[1] = m_address[13];
+        addr[2] = m_address[14];
+        addr[3] = m_address[15];
+    }
+    return address;
+}
+
+Inet6Address::operator InetAddress() const
+{
+    return AsV4();
+}
+
+const uint8_t* Inet6Address::Data() const
+{
+    return m_address.data();
+}
+
+uint8_t* Inet6Address::Data()
+{
+    return m_address.data();
+}
+
+bool Inet6Address::IsEmpty() const
+{
+    return std::all_of(begin(m_address), end(m_address),
+        [](auto u) { return u == 0; });
+}
+
+Inet6Address::operator bool() const
+{
+    return !IsEmpty();
+}
+
+bool Inet6Address::IsMappedV4() const
+{
+    if (IsEmpty())
+    {
+        return false;
+    }
+
+    const uint8_t* bytes = Data();
+
+    for (uint8_t i = 0; i < 10; ++i)
+    {
+        if (bytes[i] != 0x00)
+        {
+            return false;
+        }
+    }
+
+    return bytes[10] == 0xff && bytes[11] == 0xff;
+}
+
+bool Inet6Address::IsPrivate() const
+{
+    return false;
+}
+
+bool Inet6Address::operator==(const Inet6Address& addr) const
+{
+    return MemoryUtil::Equal(Data(), addr.Data(), SIZE);
+}
+
+bool Inet6Address::operator!=(const Inet6Address& addr) const
+{
+    return !MemoryUtil::Equal(Data(), addr.Data(), SIZE);
+}
+
+bool Inet6Address::operator<(const Inet6Address& addr) const
+{
+    return MemoryUtil::Less(Data(), addr.Data(), SIZE);
+}
+
+std::string ToString(const Inet6Address& address)
+{
+    char buffer[Inet6Address::LENGTH + 1] = { 0 };
+    std::string_view result = ToString(
+        address,
+        buffer,
+        Inet6Address::LENGTH);
+
+    return std::string{ result };
+}
+
+std::ostream& operator<<(std::ostream& o, const Inet6Address& address)
+{
+    return o << ToString(address);
+}
+// Inet6Address                                              END
+// -------------------------------------------------------------
+// ParseAddress                                            START
+Result<ParsedAddress> ParseAddress(std::string_view address)
+{
+    InetAddress addr4;
+    if (auto result = addr4.FromString(address); result)
+    {
+        return ParsedAddress{ addr4, AddressFamily::Inet4 };
+    }
+
+    Inet6Address addr6;
+    if (auto result = addr6.FromString(address); result)
+    {
+        return ParsedAddress{ addr6, AddressFamily::Inet6 };
+    }
+
+    return Failure(E_INVALID_ARGUMENT)
+        .WithContext("unable to parse address '{}'", address);
+}
+// ParseAddress                                              END
 }  // namespace Fusion

@@ -56,5 +56,47 @@ Failure Internal::GetLastNetworkFailure()
     return E_FAILURE(err);
 }
 // GetLastNetworkError                                       END
+ // -------------------------------------------------------------
+ // InetAddress                                              START
+std::string_view ToString(
+    const InetAddress& address,
+    char* buffer,
+    size_t len)
+{
+    static constexpr std::string_view INET_EMPTY{ "0.0.0.0" };
+
+    if (!inet_ntop(
+        AF_INET,
+        address.Data(),
+        buffer,
+        socklen_t(len)))
+    {
+        return INET_EMPTY;
+    }
+
+    return { buffer };
+}
+// InetAddress                                               END
+// -------------------------------------------------------------
+// Inet6Address                                            START
+std::string_view ToString(
+    const Inet6Address& address,
+    char* buffer,
+    size_t len)
+{
+    static constexpr std::string_view INET6_EMPTY{ "::0" };
+
+    if (!inet_ntop(
+        AF_INET6,
+        address.Data(),
+        buffer,
+        socklen_t(len)))
+    {
+        return INET6_EMPTY;
+    }
+
+    return { buffer };
+}
+// Inet6Address                                              END
 // -------------------------------------------------------------
 #endif

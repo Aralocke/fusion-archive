@@ -96,6 +96,21 @@ std::string_view ToString(
     return ToString(type, buffer, LENGTH);
 }
 
+template<size_t LENGTH>
+std::string_view ToString(
+    const InetAddress& address,
+    char(&buffer)[LENGTH])
+{
+    return ToString(address, buffer, LENGTH);
+}
+
+template<size_t LENGTH>
+std::string_view ToString(
+    const Inet6Address& address,
+    char(&buffer)[LENGTH])
+{
+    return ToString(address, buffer, LENGTH);
+}
 }  // namespace Fusion
 
 template<>
@@ -128,6 +143,35 @@ struct fmt::formatter<Fusion::AddressInfoFlags>
     }
 };
 
+template<>
+struct fmt::formatter<Fusion::InetAddress>
+    : fmt::formatter<std::string>
+{
+    template<typename Context>
+    auto format(
+        const Fusion::InetAddress& address,
+        Context& ctx)
+    {
+        return formatter<std::string>::format(
+            Fusion::ToString(address),
+            ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<Fusion::Inet6Address>
+    : fmt::formatter<std::string>
+{
+    template<typename Context>
+    auto format(
+        const Fusion::Inet6Address& address,
+        Context& ctx)
+    {
+        return formatter<std::string>::format(
+            Fusion::ToString(address),
+            ctx);
+    }
+};
 
 template<>
 struct fmt::formatter<Fusion::MessageOption>

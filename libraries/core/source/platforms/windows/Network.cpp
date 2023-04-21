@@ -151,6 +151,40 @@ PollFlags Internal::GetPollFlags(int32_t flags)
 }
 // PollFlags                                                 END
 // -------------------------------------------------------------
+// InetAddress                                             START
+std::string_view ToString(
+    const InetAddress& address,
+    char* buffer,
+    size_t len)
+{
+    constexpr std::string_view INET_EMPTY{ "0.0.0.0" };
+
+    if (!inet_ntop(AF_INET, address.Data(), buffer, len))
+    {
+        return INET_EMPTY;
+    }
+
+    return { buffer };
+}
+// InetAddress                                               END
+// -------------------------------------------------------------
+// Inet6Address                                            START
+std::string_view ToString(
+    const Inet6Address& address,
+    char* buffer,
+    size_t len)
+{
+    constexpr std::string_view INET6_EMPTY{ "::0" };
+
+    if (!inet_ntop(AF_INET6, address.Data(), buffer, len))
+    {
+        return INET6_EMPTY;
+    }
+
+    return { buffer };
+}
+// Inet6Address                                              END
+// -------------------------------------------------------------
 }  // namespace fusion
 
 #endif

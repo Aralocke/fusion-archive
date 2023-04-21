@@ -45,5 +45,10 @@ using Socket = int;
 
 constexpr Socket INVALID_SOCKET = Socket(-1);
 
+struct MulticastGroup;
+struct ParsedAddress;
+
+class InetAddress;
+class Inet6Address;
 class SocketConfig;
 }  // namespace Fusion
