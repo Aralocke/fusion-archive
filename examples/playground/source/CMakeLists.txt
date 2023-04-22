@@ -60,7 +60,10 @@ if(MSVC)
     endif()
 endif()
 
-list(APPEND playground_link_targets Fusion::Core RustPlayground)
+list(APPEND playground_link_targets Fusion::Core)
+if(FUSION_BUILD_RUST_EXTENSIONS)
+    list(APPEND playground_link_targets RustPlayground)
+endif()
 
 target_sources(Playground
     PRIVATE ${PUBLIC_HEADERS} ${SOURCES}
