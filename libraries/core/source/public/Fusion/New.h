@@ -68,4 +68,4 @@ inline void operator delete[](
 }
 
 #define FUSION_PLACEMENT_NEW(ptr,...) \
-    new(Fusion::PlaceholderNewTag{}, ptr, __VA_ARGS__)
+    new(Fusion::PlaceholderNewTag{}, ptr, ##__VA_ARGS__)

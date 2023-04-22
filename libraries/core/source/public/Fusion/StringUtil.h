@@ -434,4 +434,4 @@ private:
 }  // namespace Fusion
 
 #define FUSION_IMPL_STRINGUTILS 1
-#include <fusion/impl/StringUtil.h>
+#include <Fusion/Impl/StringUtil.h>

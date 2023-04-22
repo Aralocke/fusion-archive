@@ -53,12 +53,13 @@ VersionCommand::VersionCommand(Options options)
     : m_options(std::move(options))
 { }
 
-VersionCommand::~VersionCommand()
-{ }
+VersionCommand::~VersionCommand() = default;
 
 Result<void> VersionCommand::Run()
 {
     using namespace std::string_view_literals;
+
+    FUSION_UNUSED(m_options);
 
     std::ostringstream o;
     o << Version::Project() << ' ' << Version::FullVersion() << " ("sv

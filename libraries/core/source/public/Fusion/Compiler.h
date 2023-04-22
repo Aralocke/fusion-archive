@@ -70,8 +70,8 @@
 #define _FUSION_STRINGIZE(a) #a
 #define FUSION_STRINGIZE(a) _FUSION_STRINGIZE(a)
 
-// FUSION_CURRENT_FUNCTION based off the boost COOST_CURRENT_FUNCTION
-// implemenetation.
+// FUSION_CURRENT_FUNCTION based off the boost BOOST_CURRENT_FUNCTION
+// implementation.
 #ifndef FUSION_CURRENT_FUNCTION
 #if defined(__GNUC__)
 #define FUSION_CURRENT_FUNCTION __PRETTY_FUNCTION__
@@ -90,16 +90,16 @@
 
 #if FUSION_COMPILER_CLANG
 // CLANG specific macros - START
-#define FUSION_HAS_RTTI                     __has_feature(cxx_rtti)
+#define FUSION_HAS_RTTI __has_feature(cxx_rtti)
 
 // Detect if we're allowed to use exceptions in this build.
-// By default we won't but a few places need to know about catching
+// By default, we won't but a few places need to know about catching
 // exceptions correctly from libraries we may use.
-#define FUSION_HAS_EXCEPTIONS               __has_feature(cxx_exceptions)
+#define FUSION_HAS_EXCEPTIONS __has_feature(cxx_exceptions)
 // Determine the default allocation alignment for this machine
-#define FUSION_DEFAULT_ALLOC_ALIGNMENT      __BIGGEST_ALIGNMENT__
+#define FUSION_DEFAULT_ALLOC_ALIGNMENT __BIGGEST_ALIGNMENT__
 
-// Platform specific compiler instrinsics
+// Platform specific compiler intrinsic
 #define FUSION_PUSH_WARNINGS() _Pragma("clang diagnostic push")
 #define FUSION_POP_WARNINGS() _Pragma("clang diagnostic pop")
 #define FUSION_DISABLE_CLANG_WARNING(n) _Pragma(FUSION_STRINGIZE(clang diagnostic ignored n))
@@ -121,8 +121,17 @@
 #define FUSION_UNREACHABLE() __builtin_unreachable()
 #define FUSION_THREAD_LOCAL __thread
 
+#ifndef __has_feature
+// Compatibility with non-clang compilers.
+#define __has_feature(x) 0
+#endif
+#ifndef __has_extension
+// Compatibility with pre-3.0 compilers.
+#define __has_extension __has_feature
+#endif
+
 // Determine if we have address sanitizer enabled.
-#ifdef __has_feature(address_sanitizer)
+#if __has_feature(address_sanitizer)
 #define FUSION_ADDRESS_SANITIZER_ENABLED 1
 #define FUSION_SKIP_ADDRESS_SANITIZER __attribute__((no_sanitize("address")))
 #else
@@ -130,15 +139,15 @@
 #define FUSION_SKIP_ADDRESS_SANITIZER
 #endif
 // Determine if we have thread sanitizer enabled.
-#ifdef __has_feature(thread_sanitizer)
+#if __has_feature(thread_sanitizer)
 #define FUSION_THREAD_SANITIZER_ENABLED 1
 #define FUSION_SKIP_THREAD_SANITIZER __attribute__((no_sanitize("thread")))
 #else
-#define FUSION_THREAD_SANITIZER_ENABLED 1
+#define FUSION_THREAD_SANITIZER_ENABLED 0
 #define FUSION_SKIP_THREAD_SANITIZER
 #endif
 // Determine if we have undefined behavior sanitizer enabled.
-#ifdef __has_feature(undefined_sanitizer)
+#if __has_feature(undefined_sanitizer)
 #define FUSION_UNDEFINED_SANITIZER_ENABLED 1
 #define FUSION_SKIP_UNDEFINED_SANITIZER __attribute__((no_sanitize("undefined")))
 #else
@@ -196,7 +205,7 @@
 #define FUSION_THREAD_SANITIZER_ENABLED 1
 #define FUSION_SKIP_THREAD_SANITIZER __attribute__((no_sanitize_thread))
 #else
-#define FUSION_THREAD_SANITIZER_ENABLED 1
+#define FUSION_THREAD_SANITIZER_ENABLED 0
 #define FUSION_SKIP_THREAD_SANITIZER
 #endif
 // Determine if we have undefined behavior sanitizer enabled.
@@ -285,7 +294,7 @@ static_assert(_NATIVE_WCHAR_T_DEFINED, "wchar_t support required");
 #define FUSION_CPP17_ATTRIBUTE_NODISCARD \
     (FUSION_COMPILER_APPLECLANG >= 8000000 && __cplusplus > 201402L)
 // APPLE CLANG Specific - END
-#endif
+#else
 // CLANG (non-Apple) Specific - START
 #define FUSION_CPP17_ATTRIBUTE_FALLTHROUGH \
     (FUSION_COMPILER_CLANG >= 30900 && __cplusplus > 201402L)
@@ -294,6 +303,7 @@ static_assert(_NATIVE_WCHAR_T_DEFINED, "wchar_t support required");
 #define FUSION_CPP17_ATTRIBUTE_NODISCARD \
     (FUSION_COMPILER_CLANG >= 30900 && __cplusplus > 201402L)
 // CLANG (non-Apple) Specific - END
+#endif
 #elif FUSION_COMPILER_GCC
 // GCC Specific - START
 #define FUSION_CPP17_ATTRIBUTE_FALLTHROUGH \
