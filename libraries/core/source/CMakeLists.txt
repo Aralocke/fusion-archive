@@ -123,7 +123,10 @@ endif()
 #
 # Configure link targets
 #
-list(APPEND fusion_link_targets Fusion::RustCore)
+list(APPEND fusion_link_targets "")
+if(FUSION_BUILD_RUST_EXTENSIONS)
+    list(APPEND fusion_link_targets Fusion::RustCore)
+endif()
 if(WIN32)
     list(APPEND fusion_link_targets ws2_32)
 endif()

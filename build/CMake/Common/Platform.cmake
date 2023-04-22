@@ -16,6 +16,8 @@ if(NOT _FUSION_MAIN_PROJECT)
     return()
 endif()
 
+include(CheckCCompilerFlag)
+
 if(WIN32)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(FUSION_BUILD_ARCH "X64")
@@ -25,7 +27,27 @@ if(WIN32)
     set(FUSION_BUILD_PLATFORM "Windows")
 elseif(UNIX)
     if(CMAKE_SYSTEM_NAME STREQUAL Darwin)
-        set(FUSION_BUILD_ARCH "X64")
+
+        set(CMAKE_REQUIRED_LINK_OPTIONS "-arch;x86_64")
+        check_c_compiler_flag("-arch x86_64" FUSION_SUPPORTS_X86_64)
+
+        if(FUSION_SUPPORTS_X86_64)
+            message(STATUS "Detected support for x86_64 architecture")
+            set(FUSION_BUILD_ARCH "X64")
+        endif()
+
+        set(CMAKE_REQUIRED_LINK_OPTIONS "-arch;arm64")
+        check_c_compiler_flag("-arch arm64" FUSION_SUPPORTS_ARM64)
+
+        if(FUSION_SUPPORTS_ARM64)
+            message(STATUS "Detected support for ARM64 architecture")
+            set(FUSION_BUILD_ARCH "ARM64")
+        endif()
+
+        if(NOT FUSION_BUILD_ARCH)
+            message(FATAL_ERROR "Unable to detect compiler/platform architecture")
+        endif()
+
         set(FUSION_BUILD_PLATFORM "OSX")
     elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)

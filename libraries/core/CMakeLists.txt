@@ -16,5 +16,7 @@ if(FUSION_BUILD_BINDINGS
         AND FUSION_BUILD_PYTHON_BINDINGS)
     add_subdirectory(bindings)
 endif()
-add_subdirectory(rust)
+if(FUSION_BUILD_RUST_EXTENSIONS)
+    add_subdirectory(rust)
+endif()
 add_subdirectory(source)

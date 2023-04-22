@@ -42,6 +42,7 @@ option(FUSION_BUILD_TESTS "Build the unit test project" ON)
 # Define global options which affect the libraries and what is generated.
 option(FUSION_BUILD_BINDINGS "Build all library bindings if they are configured on this platform" ON)
 option(FUSION_BUILD_PYTHON_BINDINGS "Build Python library bindings if supported on this platform" ON)
+option(FUSION_BUILD_RUST_EXTENSIONS "Build the rust extensions into the libraries" OFF)
 
 # Configure CMake to load the project build scripts. If this is a full
 # build the system will pull in  the entire environment setup.
