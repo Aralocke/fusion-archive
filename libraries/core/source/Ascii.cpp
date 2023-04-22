@@ -140,7 +140,6 @@ std::string_view Ascii::ToHexString(
 
     length = std::min(length - 1, size * 2 + 1);  // terminator
     auto* inputU8 = static_cast<const uint8_t*>(bytes);
-    auto* buf = static_cast<char*>(buffer);
 
     size_t i = 0;
     while (i + 2 <= length)

@@ -152,11 +152,11 @@ Failure::Failure(ErrorType error)
 { }
 
 Failure::Failure(std::string_view message)
-    : m_error(E_FAILURE)
-    , m_message(message)
+    : m_message(message)
+    , m_error(E_FAILURE)
 { }
 
-Failure::~Failure() { }
+Failure::~Failure() = default;
 
 Failure::operator bool() const
 {

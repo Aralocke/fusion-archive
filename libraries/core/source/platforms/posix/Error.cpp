@@ -30,14 +30,33 @@ ErrorCode GetLastError()
     return static_cast<ErrorCode>(errno);
 }
 
+#if FUSION_COMPILER_GCC
+// The version of strerror_r on GNU compilers returns a 'const char*' rather
+// than an intger of the length.
+static std::string_view ToString(char* buffer, size_t length, const char* src)
+{
+    if (src != buffer)
+    {
+        return StringUtil::Copy(buffer, length, src);
+    }
+    return { buffer };
+}
+#else
+static std::string_view ToString(char* buffer, size_t length, int size)
+{
+    FUSION_UNUSED(length);
+
+    return {buffer, size_t(size) };
+}
+#endif
+
 std::string_view ToString(
     ErrorCode platformCode,
     char* buffer,
     size_t length)
 {
-    char* res = strerror_r(platformCode, buffer, length);
-
-    return { res, StringUtil::Length(res, length) };
+    buffer[0] = 0;
+    return ToString(buffer, length, strerror_r(platformCode, buffer, length));
 }
 
 Error Error::Errno(ErrorCode platformCode)
@@ -71,6 +90,8 @@ Error Error::Errno(ErrorCode platformCode)
     case EPROTONOSUPPORT:
     case EPROTOTYPE:
         return E_INVALID_ARGUMENT(platformCode);
+    default:
+        break;
     }
     return E_FAILURE(platformCode);
 }

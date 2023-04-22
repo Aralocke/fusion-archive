@@ -25,7 +25,7 @@
 
 namespace Fusion
 {
-struct Error;
+class Error;
 class Failure;
 
 using ErrorCode = int32_t;
@@ -342,4 +342,4 @@ std::ostream& operator<<(std::ostream& o, const Failure& fail);
 }  // namespace Error
 
 #define FUSION_IMPL_ERROR 1
-#include <fusion/impl/Error.h>
+#include <Fusion/Impl/Error.h>

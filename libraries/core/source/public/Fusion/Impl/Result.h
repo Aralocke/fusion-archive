@@ -82,7 +82,7 @@ const typename Result<T, E>::ValueType* Result<T, E>::operator->() const
 }
 
 template<typename T, typename E>
-Result<T, E>::ValueType Result<T, E>::Default()
+typename Result<T, E>::ValueType Result<T, E>::Default()
 {
     if (Succeeded())
     {
@@ -95,7 +95,7 @@ Result<T, E>::ValueType Result<T, E>::Default()
 }
 
 template<typename T, typename E>
-Result<T, E>::ValueType Result<T, E>::Default() const
+typename Result<T, E>::ValueType Result<T, E>::Default() const
 {
     if (Succeeded())
     {

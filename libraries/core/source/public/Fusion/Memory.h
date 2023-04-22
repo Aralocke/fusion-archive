@@ -20,6 +20,8 @@
 #include <Fusion/Macros.h>
 #include <Fusion/TypeTraits.h>
 
+#include <utility>
+
 namespace Fusion
 {
 //
@@ -77,7 +79,7 @@ public:
     ScopeGuard(ScopeGuard&&) = delete;
 
 private:
-    ScopeGuard(T o) : m_obj(std::move(o)) { }
+    explicit ScopeGuard(T o) : m_obj(std::move(o)) { }
 
 private:
     T m_obj;

@@ -27,7 +27,7 @@ namespace Fusion
 {
 Result<void> PlayCommand::Run(Options options)
 {
-    PlayCommand cmd(std::move(options));
+    PlayCommand cmd(options);
     return cmd.Run();
 }
 
@@ -41,11 +41,10 @@ void PlayCommand::Setup(
 }
 
 PlayCommand::PlayCommand(Options options)
-    : m_options(std::move(options))
+    : m_options(options)
 { }
 
-PlayCommand::~PlayCommand()
-{ }
+PlayCommand::~PlayCommand() = default;
 
 Result<void> PlayCommand::Run()
 {
@@ -54,6 +53,7 @@ Result<void> PlayCommand::Run()
     RunPlayground();
 #endif
 
+    FUSION_UNUSED(m_options);
     return Success;
 }
 }  // namespace Fusion

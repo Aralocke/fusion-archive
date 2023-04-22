@@ -144,7 +144,7 @@ TEST(MemoryUtilTests, ClearTrivialTypes)
 {
     using namespace Fusion;
 
-    std::array<TrivialType, 4> values = { { 1, 2, 3, 4 } };
+    std::array<TrivialType, 4> values = { { {1}, {2}, {3}, {4} } };
     {
         ASSERT_EQ(values[0].i, 1);
         ASSERT_EQ(values[1].i, 2);
@@ -542,7 +542,6 @@ TEST(MemoryUtilTests, LessPodData)
     auto a = std::to_array<uint8_t>({ 1, 2, 3 });
     auto b = std::to_array<uint8_t>({ 1, 2, 3 });
     auto c = std::to_array<uint8_t>({ 1, 2, 4 });
-    auto d = std::to_array<uint8_t>({ 1, 2, 3, 4 });
     {
         ASSERT_EQ(a.size(), b.size());
         ASSERT_EQ(a.size(), c.size());

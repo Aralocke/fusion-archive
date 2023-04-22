@@ -237,7 +237,7 @@ class Array<T, 0> final
 {
 public:
     Array() = default;
-    ~Array() override = default;
+    ~Array() = default;
 
     Array& operator=(const Array&) { return *this; }
     Array& operator=(Array&&) { return *this; }
