@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <fusion/Error.h>
+#include <Fusion/Error.h>
 
 #include <type_traits>
 #include <variant>
@@ -164,4 +164,4 @@ static const Result<void> Success{ std::monostate{} };
 }  // namespace Fusion
 
 #define FUSION_IMPL_RESULT 1
-#include <fusion/impl/Result.h>
+#include <Fusion/Impl/Result.h>
