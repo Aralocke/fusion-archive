@@ -308,8 +308,8 @@ protected:
     //
     void Move(
         EmbeddedVector&& vec,
-        T* vBuffer,
-        uint32_t vSize,
+        T* vecBuffer,
+        uint32_t vecSize,
         T* buffer,
         uint32_t capacity);
 
@@ -344,7 +344,6 @@ private:
     using Base = EmbeddedVector<T, 0>;
 
 public:
-
     //
     //
     //
@@ -354,12 +353,12 @@ public:
     //
     //
     template<size_t N>
-    EmbeddedVector(const T(&in)[N]);
+    explicit EmbeddedVector(const T(&in)[N]);
 
     //
     //
     //
-    EmbeddedVector(std::span<T> in);
+    EmbeddedVector(std::span<const T> in);
 
     //
     //
@@ -369,29 +368,29 @@ public:
     //
     //
     //
-    EmbeddedVector(size_t count, const T& in = T());
+    explicit EmbeddedVector(size_t count, const T& in = T());
 
     //
     //
     //
-    EmbeddedVector(const EmbeddedVector& vec);
+    EmbeddedVector(const EmbeddedVector<T, Length>& vec);
 
     //
     //
     //
-    EmbeddedVector(EmbeddedVector&& vec);
-
-    //
-    //
-    //
-    template<size_t N>
-    EmbeddedVector(const EmbeddedVector<T, N>& vec);
+    EmbeddedVector(EmbeddedVector<T, Length>&& vec) noexcept;
 
     //
     //
     //
     template<size_t N>
-    EmbeddedVector(EmbeddedVector<T, N>&& vec);
+    explicit EmbeddedVector(const EmbeddedVector<T, N>& vec);
+
+    //
+    //
+    //
+    template<size_t N>
+    explicit EmbeddedVector(EmbeddedVector<T, N>&& vec);
 
     //
     //
@@ -401,45 +400,45 @@ public:
     //
     //
     //
-    EmbeddedVector& operator=(const EmbeddedVector& vec);
+    EmbeddedVector<T, Length>& operator=(const EmbeddedVector<T, Length>& vec);
 
     //
     //
     //
     template<size_t N>
-    EmbeddedVector& operator=(const EmbeddedVector<T, N>& vect);
+    EmbeddedVector<T, Length>& operator=(const EmbeddedVector<T, N>& vec);
 
     //
     //
     //
-    EmbeddedVector& operator=(EmbeddedVector&& vec);
-
-    //
-    //
-    //
-    template<size_t N>
-    EmbeddedVector& operator=(EmbeddedVector<T, N>&& vect);
-
-    //
-    //
-    //
-    EmbeddedVector& operator=(std::span<const T> data);
-
-    //
-    //
-    //
-    EmbeddedVector& operator=(std::span<T> data);
-
-    //
-    //
-    //
-    EmbeddedVector& operator=(std::initializer_list<T> values);
+    EmbeddedVector<T, Length>& operator=(EmbeddedVector<T, Length>&& vec) noexcept;
 
     //
     //
     //
     template<size_t N>
-    EmbeddedVector& operator=(const T(&in)[N]);
+    EmbeddedVector<T, Length>& operator=(EmbeddedVector<T, N>&& vec);
+
+    //
+    //
+    //
+    EmbeddedVector<T, Length>& operator=(std::span<const T> data);
+
+    //
+    //
+    //
+    EmbeddedVector<T, Length>& operator=(std::span<T> data);
+
+    //
+    //
+    //
+    EmbeddedVector<T, Length>& operator=(std::initializer_list<T> values);
+
+    //
+    //
+    //
+    template<size_t N>
+    EmbeddedVector<T, Length>& operator=(const T(&in)[N]);
 
     //
     //
@@ -450,14 +449,7 @@ private:
     template<typename U, size_t N> friend class EmbeddedVector;
 
 private:
-    struct Storage
-    {
-        alignas(T) uint8_t storage[Length][sizeof(T)];
-
-        constexpr size_t Capacity() const { return Length; }
-        constexpr const T* Data() const { return reinterpret_cast<const T*>(storage); }
-        T* Data() { return reinterpret_cast<T*>(storage); }
-    } m_storage;
+    alignas(T) uint8_t m_storage[Length][sizeof(T)] = { };
 };
 
 //

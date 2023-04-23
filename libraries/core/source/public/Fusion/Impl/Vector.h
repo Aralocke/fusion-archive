@@ -30,19 +30,19 @@ EmbeddedVector<T>::EmbeddedVector(
     T* buffer,
     uint32_t capacity)
     : m_data(buffer)
-    , m_capacity(capacity)
     , m_offset(0)
+    , m_capacity(capacity)
 { }
 
 template<typename T>
 EmbeddedVector<T>::EmbeddedVector(
     EmbeddedVector&& vec,
-    T* vBuffer,
-    uint32_t vSize,
+    T* vecBuffer,
+    uint32_t vecSize,
     T* buffer,
     uint32_t capacity)
 {
-    Move(std::move(vec), vBuffer, vSize, buffer, capacity);
+    Move(std::move(vec), vecBuffer, vecSize, buffer, capacity);
 }
 
 template<typename T>
@@ -360,8 +360,8 @@ bool EmbeddedVector<T>::IsEmbedded() const
 template<typename T>
 void EmbeddedVector<T>::Move(
     EmbeddedVector&& vec,
-    T* vBuffer,
-    uint32_t vSize,
+    T* vecBuffer,
+    uint32_t vecSize,
     T* buffer,
     uint32_t capacity)
 {
@@ -381,7 +381,7 @@ void EmbeddedVector<T>::Move(
         Insert(vec.Data(), vec.Size());
     }
 
-    vec.Reset(vBuffer, vSize);
+    vec.Reset(vecBuffer, vecSize);
 }
 
 template<typename T>
@@ -483,7 +483,7 @@ void EmbeddedVector<T>::Reserve(uint32_t size, bool exact)
         Realloc(
             (exact)
                 ? size
-                : std::max(size, (m_capacity + m_capacity) / 2)
+                : std::max<size_t>(size, (m_capacity + m_capacity) / 2)
         );
     }
 }
@@ -534,21 +534,21 @@ EmbeddedVector<T>::operator std::span<T>()
 
 template<typename T, size_t Length>
 EmbeddedVector<T, Length>::EmbeddedVector()
-    : Base(m_storage.Data(), Length)
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 { }
 
 template<typename T, size_t Length>
 template<size_t N>
 EmbeddedVector<T, Length>::EmbeddedVector(const T(&in)[N])
-    : EmbeddedVector()
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 {
     Base::Reserve(N);
     Base::Insert(Base::end(), in, N);
 }
 
 template<typename T, size_t Length>
-EmbeddedVector<T, Length>::EmbeddedVector(std::span<T> in)
-    : EmbeddedVector()
+EmbeddedVector<T, Length>::EmbeddedVector(std::span<const T> in)
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 {
     Base::Reserve(in.size());
     Base::Insert(Base::end(), in.data(), in.size());
@@ -556,7 +556,7 @@ EmbeddedVector<T, Length>::EmbeddedVector(std::span<T> in)
 
 template<typename T, size_t Length>
 EmbeddedVector<T, Length>::EmbeddedVector(const T* in, size_t size)
-    : EmbeddedVector()
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 {
     Base::Reserve(size);
     Base::Insert(Base::end(), in, size);
@@ -564,33 +564,35 @@ EmbeddedVector<T, Length>::EmbeddedVector(const T* in, size_t size)
 
 template<typename T, size_t Length>
 EmbeddedVector<T, Length>::EmbeddedVector(size_t count, const T& in)
-    : EmbeddedVector()
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 {
     Base::Resize(count, in);
 }
 
 template<typename T, size_t Length>
-EmbeddedVector<T, Length>::EmbeddedVector(const EmbeddedVector& vec)
-    : EmbeddedVector()
+EmbeddedVector<T, Length>::EmbeddedVector(const EmbeddedVector<T, Length>& vec)
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 {
     Base::Reserve(vec.Size());
     Base::Insert(Base::end(), vec.Data(), vec.Size());
 }
 
 template<typename T, size_t Length>
-EmbeddedVector<T, Length>::EmbeddedVector(EmbeddedVector&& vec)
-    : Base(
-        std::move(vec),
-        m_storage.Data(),
-        Length,
-        m_storage.Data(),
-        Length)
-{ }
+EmbeddedVector<T, Length>::EmbeddedVector(EmbeddedVector<T, Length>&& vec) noexcept
+    : Base(reinterpret_cast<T*>(m_storage), Length)
+{
+     Base::Move(
+         std::move(vec),
+         reinterpret_cast<T*>(vec.m_storage),
+         Length,
+         nullptr,
+         0);
+}
 
 template<typename T, size_t Length>
 template<size_t N>
 EmbeddedVector<T, Length>::EmbeddedVector(const EmbeddedVector<T, N>& vec)
-    : EmbeddedVector()
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 {
     Base::Reserve(vec.Size());
     Base::Insert(Base::end(), vec.Data(), vec.Size());
@@ -599,29 +601,33 @@ EmbeddedVector<T, Length>::EmbeddedVector(const EmbeddedVector<T, N>& vec)
 template<typename T, size_t Length>
 template<size_t N>
 EmbeddedVector<T, Length>::EmbeddedVector(EmbeddedVector<T, N>&& vec)
-    : Base(
-        std::move(vec),
-        m_storage.Data(),
-        Length,
-        m_storage.Data(),
-        Length)
-{ }
+    : Base(reinterpret_cast<T*>(m_storage), Length)
+{
+        Base::Move(
+            std::move(vec),
+            reinterpret_cast<T*>(vec.m_storage),
+            N,
+            nullptr,
+            0);
+}
 
 template<typename T, size_t Length>
 EmbeddedVector<T, Length>::EmbeddedVector(std::initializer_list<T> values)
-    : EmbeddedVector()
+    : Base(reinterpret_cast<T*>(m_storage), Length)
 {
     Base::Reserve(values.size());
     Base::Insert(Base::end(), values.begin(), values.size());
 }
 
 template<typename T, size_t Length>
-EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(const EmbeddedVector& vec)
+EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(
+    const EmbeddedVector<T, Length>& vec)
 {
     if (*this != vec)
     {
-        Base::Assign(vec.Size(),
-            m_storage.Data(),
+        Base::Assign(
+            vec.Size(),
+            reinterpret_cast<T*>(m_storage),
             Length);
         Base::Insert(Base::end(), vec.Data(), vec.Size());
     }
@@ -630,25 +636,28 @@ EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(const EmbeddedVe
 
 template<typename T, size_t Length>
 template<size_t N>
-EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(const EmbeddedVector<T, N>& vec)
+EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(
+    const EmbeddedVector<T, N>& vec)
 {
-    Base::Assign(vec.Size(),
-        m_storage.Data(),
+    Base::Assign(
+        vec.Size(),
+        reinterpret_cast<T*>(m_storage),
         Length);
     Base::Insert(Base::end(), vec.Data(), vec.Size());
     return *this;
 }
 
 template<typename T, size_t Length>
-EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(EmbeddedVector&& vec)
+EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(
+    EmbeddedVector<T, Length>&& vec) noexcept
 {
     if (*this != vec)
     {
         Base::Move(
             std::move(vec),
-            m_storage.Data(),
+            reinterpret_cast<T*>(vec.m_storage),
             Length,
-            m_storage.Data(),
+            reinterpret_cast<T*>(m_storage),
             Length);
     }
     return *this;
@@ -656,13 +665,14 @@ EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(EmbeddedVector&&
 
 template<typename T, size_t Length>
 template<size_t N>
-EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(EmbeddedVector<T, N>&& vec)
+EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(
+    EmbeddedVector<T, N>&& vec)
 {
     Base::Move(
         std::move(vec),
-        m_storage.Data(),
-        Length,
-        m_storage.Data(),
+        reinterpret_cast<T*>(vec.m_storage),
+        N,
+        reinterpret_cast<T*>(m_storage),
         Length);
 
     return *this;
@@ -671,8 +681,9 @@ EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(EmbeddedVector<T
 template<typename T, size_t Length>
 EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(std::span<const T> data)
 {
-    Base::Assign(data.size(),
-        m_storage.Data(),
+    Base::Assign(
+        data.size(),
+        reinterpret_cast<T*>(m_storage),
         Length);
     Base::Insert(Base::end(), data.data(), data.size());
     return *this;
@@ -688,10 +699,12 @@ EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(std::span<T> dat
 }
 
 template<typename T, size_t Length>
-EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(std::initializer_list<T> values)
+EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(
+    std::initializer_list<T> values)
 {
-    Base::Assign(values.Size(),
-        m_storage.Data(),
+    Base::Assign(
+        values.Size(),
+        reinterpret_cast<T*>(m_storage),
         Length);
     Base::Insert(Base::end(), values.data(), values.size());
     return *this;
@@ -701,14 +714,14 @@ template<typename T, size_t Length>
 template<size_t N>
 EmbeddedVector<T, Length>& EmbeddedVector<T, Length>::operator=(const T(&in)[N])
 {
-    Base::Assign(N, m_storage.Data(), Length);
+    Base::Assign(N, reinterpret_cast<T*>(m_storage), Length);
     return *this;
 }
 
 template<typename T, size_t Length>
 void EmbeddedVector<T, Length>::Reset()
 {
-    return Base::Reset(m_storage.Data(), Length);
+    Base::Reset(reinterpret_cast<T*>(m_storage), Length);
 }
 
 template<typename T, size_t L1, size_t L2>
@@ -755,5 +768,4 @@ bool operator==(
     return arr.Size() == vec.Size()
         && std::equal(arr.begin(), arr.end(), vec.begin());
 }
-
 }  // namespace Fusion
