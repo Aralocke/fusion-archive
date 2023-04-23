@@ -154,7 +154,10 @@ TEST(VectorTests, Move)
     // Move assign
     {
         EmbeddedVector<uint8_t, 8> copy(valuesB);
-        EmbeddedVector<uint8_t, 64> dest = std::move(copy);
+        EmbeddedVector<uint8_t, 64> dest;
+        {
+            dest = std::move(copy);
+        }
 
         ASSERT_EQ(valuesB.Size(), 6);
         ASSERT_EQ(dest.Size(), valuesB.Size());
@@ -168,12 +171,17 @@ TEST(VectorTests, Assignment)
 {
     using namespace Fusion;
 
-    constexpr uint8_t values[] = { 'g', 'h', 'i', 'j', 'k', 'l' };
-    constexpr size_t valuesSize = sizeof(values);
-    std::span<const uint8_t> valueSpan{values, valuesSize};
+    constexpr auto values = std::to_array<uint8_t>({ 'g', 'h', 'i', 'j', 'k', 'l' });
+    std::span<const uint8_t> valueSpan{values};
 
-    EmbeddedVector<uint8_t, 8> buffer = values;
-    EmbeddedVector<uint8_t> buffer2 = buffer;
+    EmbeddedVector<uint8_t, 8> buffer;
+    {
+        buffer = values;
+    }
+    EmbeddedVector<uint8_t> buffer2;
+    {
+        buffer2 = buffer;
+    }
 
     ASSERT_EQ(buffer, valueSpan);
     ASSERT_EQ(buffer, buffer2);
