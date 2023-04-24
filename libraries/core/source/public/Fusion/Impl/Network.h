@@ -120,6 +120,17 @@ std::string_view ToString(
     return ToString(address, buffer, LENGTH);
 }
 
+template<typename T, SocketOpt opt>
+SocketOption<T, opt>::SocketOption(T* out)
+    : value(out)
+    , size(sizeof(T))
+{ }
+
+template<typename T, SocketOpt opt>
+SocketOption<T, opt>::SocketOption(T value)
+    : data(value)
+    , size(sizeof(T))
+{ }
 }  // namespace Fusion
 
 template<>

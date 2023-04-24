@@ -1029,6 +1029,147 @@ std::ostream& operator<<(
     const SocketAddress& address);
 
 
+//
+//
+//
+template<typename T, SocketOpt opt>
+class SocketOption final
+{
+public:
+    static const SocketOpt option = opt;
+
+    SocketOption(T* ptr);
+    SocketOption(T value);
+
+public:
+    T* value{ nullptr };
+    size_t size{ 0 };
+
+public:
+    T data;
+};
+
+//
+//
+//
+namespace SocketOptions
+{
+    //
+    //
+    //
+    using Broadcast = SocketOption<bool, SocketOpt::Broadcast>;
+
+    //
+    //
+    //
+    using Debug = SocketOption<bool, SocketOpt::Debug>;
+
+    //
+    //
+    //
+    using DontRoute = SocketOption<bool, SocketOpt::DontRoute>;
+
+    //
+    //
+    //
+    using KeepAlive = SocketOption<bool, SocketOpt::KeepAlive>;
+
+    //
+    //
+    //
+    using Linger = SocketOption<Clock::duration, SocketOpt::Linger>;
+
+    //
+    //
+    //
+    using Multicast = SocketOption<MulticastGroup, SocketOpt::Multicast>;
+
+    //
+    //
+    //
+    using MulticastLoopback = SocketOption<bool, SocketOpt::MulticastLoopback>;
+
+    //
+    //
+    //
+    using MulticastTTL = SocketOption<int32_t, SocketOpt::MulticastTTL>;
+
+    //
+    //
+    //
+    using NoDelay = SocketOption<Clock::duration, SocketOpt::NoDelay>;
+
+    //
+    //
+    //
+    using RecvBuf = SocketOption<int32_t, SocketOpt::RecvBuf>;
+
+    //
+    //
+    //
+    using RecvLowMark = SocketOption<int32_t, SocketOpt::RecvLowMark>;
+
+    //
+    //
+    //
+    using RecvTimeout = SocketOption<Clock::duration, SocketOpt::RecvTimeout>;
+
+    //
+    //
+    //
+    using ReuseAddress = SocketOption<bool, SocketOpt::ReuseAddress>;
+
+    //
+    //
+    //
+    using ReusePort = SocketOption<bool, SocketOpt::ReusePort>;
+
+    //
+    //
+    //
+    using SendBuf = SocketOption<int32_t, SocketOpt::SendBuf>;
+
+    //
+    //
+    //
+    using SendLowMark = SocketOption<int32_t, SocketOpt::SendLowMark>;
+
+    //
+    //
+    //
+    using SendTimeout = SocketOption<Clock::duration, SocketOpt::SendTimeout>;
+
+    //
+    //
+    //
+    using SocketError = SocketOption<int32_t, SocketOpt::SocketError>;
+
+    //
+    //
+    //
+    using TcpKeepAlive = SocketOption<Clock::duration, SocketOpt::TcpKeepAlive>;
+
+    //
+    //
+    //
+    using TcpKeepCount = SocketOption<int32_t, SocketOpt::TcpKeepCount>;
+
+    //
+    //
+    //
+    using TcpKeepIdle = SocketOption<Clock::duration, SocketOpt::TcpKeepIdle>;
+
+    //
+    //
+    //
+    using TcpKeepInterval = SocketOption<Clock::duration, SocketOpt::TcpKeepInterval>;
+
+    //
+    //
+    //
+    using TimeToLive = SocketOption<int32_t, SocketOpt::TimeToLive>;
+};
+
 }  // namespace Fusion
 
 #define FUSION_IMPL_NETWORK 1

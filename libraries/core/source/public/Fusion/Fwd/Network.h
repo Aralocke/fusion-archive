@@ -52,4 +52,6 @@ class InetAddress;
 class Inet6Address;
 class SocketConfig;
 class SocketAddress;
+
+template<typename, SocketOpt> class SocketOption;
 }  // namespace Fusion
