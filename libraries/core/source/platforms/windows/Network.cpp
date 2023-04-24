@@ -43,6 +43,23 @@ Internal::WSAInitializer::~WSAInitializer()
 }
 // WSAInitializer                                            END
 // -------------------------------------------------------------
+// Fcntl                                                   START
+Result<int32_t> Internal::Fcntl::GetFlags(Socket sock)
+{
+    FUSION_UNUSED(sock);
+
+    return Failure{ E_NOT_SUPPORTED };
+}
+
+Result<void> Internal::Fcntl::SetFlags(Socket sock, int32_t flags)
+{
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(flags);
+
+    return Failure{ E_NOT_SUPPORTED };
+}
+// Fcntl                                                     END
+// -------------------------------------------------------------
 // GetLastNetworkError                                     START
 Failure Internal::GetLastNetworkFailure()
 {
@@ -184,6 +201,32 @@ std::string_view ToString(
     return { buffer };
 }
 // Inet6Address                                              END
+// -------------------------------------------------------------
+// Ioctl                                                   START
+Result<void> Internal::Ioctl::SetOption(
+    Socket sock,
+    int64_t option,
+    uint64_t value)
+{
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure{ E_INVALID_ARGUMENT }
+            .WithContext("invalid socket");
+    }
+
+    if (::ioctlsocket(
+        static_cast<SOCKET>(sock),
+        static_cast<long>(option),
+        reinterpret_cast<u_long*>(&value)) == SOCKET_ERROR)
+    {
+        return GetLastNetworkFailure()
+            .WithContext("failed to set option '{}' ({}) on '{}'",
+                option, value, sock);
+    }
+
+    return Success;
+}
+// Ioctl                                                     END
 // -------------------------------------------------------------
 }  // namespace fusion
 

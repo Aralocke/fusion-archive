@@ -20,6 +20,12 @@
 
 #include <Fusion/Internal/Network.h>
 
+#include <cerrno>
+
+#include <fcntl.h>
+
+namespace Fusion
+{
 // -------------------------------------------------------------
 // GetLastNetworkError                                     START
 Failure Internal::GetLastNetworkFailure()
@@ -99,4 +105,60 @@ std::string_view ToString(
 }
 // Inet6Address                                              END
 // -------------------------------------------------------------
+// Fcntl                                                   START
+Result<int32_t> Internal::Fcntl::GetFlags(Socket sock)
+{
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT)
+            .WithContext("invalid client socket");
+    }
+
+    int flags = 0;
+    if (flags = ::fcntl(static_cast<int>(sock), F_GETFL, 0);
+        flags == SOCKET_ERROR)
+    {
+        return Failure::Errno()
+            .WithContext("failed to get fcntl flags for '{}'", sock);
+    }
+
+    return flags;
+}
+
+Result<void> Internal::Fcntl::SetFlags(Socket sock, int32_t flags)
+{
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT)
+            .WithContext("invalid client socket");
+    }
+
+    if (::fcntl(
+        static_cast<int>(sock),
+        F_SETFL,
+        flags) == SOCKET_ERROR)
+    {
+        return GetLastNetworkFailure()
+            .WithContext("failed to set fcntl flags '{}' on '{}'",
+                flags,
+                sock);
+    }
+
+    return Success;
+}
+// Fcntl                                                     END
+// -------------------------------------------------------------
+// Ioctl                                                   START
+Result<void> Internal::Ioctl::SetOption(
+    Socket sock,
+    int64_t option,
+    uint64_t value)
+{
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(option);
+    FUSION_UNUSED(value);
+
+    return Failure{ E_NOT_SUPPORTED };
+}
+// Ioctl                                                     END
 #endif

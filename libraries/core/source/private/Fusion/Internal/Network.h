@@ -82,6 +82,40 @@ private:
 #endif
 
 //
+//
+//
+class Fcntl final
+{
+public:
+    //
+    //
+    //
+    static Result<int32_t> GetFlags(Socket sock);
+
+    //
+    //
+    //
+    static Result<void> SetFlags(
+        Socket sock,
+        int32_t flags);
+};
+
+//
+//
+//
+class Ioctl final
+{
+public:
+    //
+    //
+    //
+    static Result<void> SetOption(
+        Socket sock,
+        int64_t option,
+        uint64_t value);
+};
+
+//
 // Storage for storing any socket address structure
 //
 using SockAddrStorage = std::array<uint8_t, sizeof(sockaddr_storage)>;
