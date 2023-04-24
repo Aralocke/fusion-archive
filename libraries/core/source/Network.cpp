@@ -22,6 +22,10 @@
 #include <Fusion/MemoryUtil.h>
 #include <Fusion/StringUtil.h>
 
+#include <Fusion/Internal/IocpSocketService.h>
+#include <Fusion/Internal/EPollSocketService.h>
+#include <Fusion/Internal/KQueueSocketService.h>
+#include <Fusion/Internal/SelectSocketService.h>
 #include <Fusion/Internal/StandardNetwork.h>
 
 #include <iostream>
@@ -1754,4 +1758,91 @@ Result<size_t> Poll(
 }
 // Poll                                                      END
 // -------------------------------------------------------------
+// SocketEvent                                             START
+bool SocketEvent::operator==(const Socket& sock) const
+{
+    return this->sock == sock;
+}
+
+bool SocketEvent::operator!=(const Socket& sock) const
+{
+    return this->sock != sock;
+}
+
+bool SocketEvent::operator<(const Socket& sock) const
+{
+    return this->sock < sock;
+}
+// SocketEvent                                               END
+// -------------------------------------------------------------
+// SocketService                                           START
+Result<std::unique_ptr<SocketService>> SocketService::Create(
+    Network& network)
+{
+    return Create(Type::Default, network);
+}
+
+Result<std::unique_ptr<SocketService>> SocketService::Create(
+    Type type,
+    Network& network)
+{
+    using namespace Fusion::Internal;
+
+    std::unique_ptr<SocketService> service;
+
+    switch (type)
+    {
+#if FUSION_PLATFORM_WINDOWS
+    case Type::Default:
+    case Type::Iocp:
+    {
+        service = std::make_unique<IocpSocketService>(network);
+        break;
+    }
+#else
+    case Type::IOCP:
+        return Failure{ E_NOT_SUPPORTED };
+#endif
+#if FUSION_PLATFORM_POSIX
+    case Type::Default:
+    case Type::EPOLL:
+    {
+        service = std::make_unique<EPollSocketService>(network);
+        break;
+    }
+#else
+    case Type::Epoll:
+        return Failure{ E_NOT_SUPPORTED };
+#endif
+#if FUSION_PLATFORM_APPLE
+    case Type::Default:
+    case Type::KQUEUE:
+        return std::make_unique<KQueueSocketService>(network);
+#else
+    case Type::Kqueue:
+        return Failure{ E_NOT_SUPPORTED };
+#endif
+    default:
+    {
+        service = std::make_unique<SelectSocketService>(network);
+        break;
+    }
+    }
+
+    if (auto result = service->Start(); !result)
+    {
+        return result.Error()
+            .WithContext("failed to start socket service");
+    }
+
+    return service;
+}
+
+Result<std::span<SocketEvent>> SocketService::Execute()
+{
+    return Execute(std::chrono::seconds(-1));
+}
+// SocketService                                             END
+// -------------------------------------------------------------
+
 }  // namespace Fusion

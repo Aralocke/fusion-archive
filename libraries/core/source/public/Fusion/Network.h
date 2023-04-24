@@ -17,11 +17,14 @@
 #pragma once
 
 #include <Fusion/Fwd/Network.h>
+
+#include <Fusion/DateTime.h>
 #include <Fusion/Enum.h>
 #include <Fusion/Result.h>
 
 #include <array>
 #include <iosfwd>
+#include <span>
 #include <string_view>
 #include <variant>
 namespace Fusion
@@ -1479,6 +1482,109 @@ Result<size_t> Poll(
 Result<size_t> Poll(
     PollFd& fd,
     Clock::duration timeout);
+
+//
+//
+//
+struct SocketEvent
+{
+    Socket sock{ INVALID_SOCKET };
+    SocketOperation events{ SocketOperation::None };
+
+    bool operator==(const Socket& sock) const;
+    bool operator!=(const Socket& sock) const;
+    bool operator<(const Socket& sock) const;
+};
+
+//
+//
+//
+class SocketService
+{
+public:
+    SocketService(const SocketService&) = delete;
+    SocketService& operator=(const SocketService&) = delete;
+
+public:
+    enum class Type : uint8_t
+    {
+        Default = 0,
+        Select,
+        Epoll,
+        Iocp,
+        Kqueue,
+    };
+
+    //
+    //
+    //
+    static Result<std::unique_ptr<SocketService>> Create(Network& net);
+
+    //
+    //
+    //
+    static Result<std::unique_ptr<SocketService>> Create(
+        Type type,
+        Network& net);
+
+public:
+    //
+    //
+    //
+    virtual ~SocketService() = default;
+
+    //
+    //
+    //
+    virtual Result<void> Add(
+        Socket sock,
+        SocketOperation events) = 0;
+
+    //
+    //
+    //
+    virtual Result<void> Close(Socket sock) = 0;
+
+    //
+    //
+    //
+    virtual void Notify() = 0;
+
+    //
+    //
+    //
+    Result<std::span<SocketEvent>> Execute();
+
+    //
+    //
+    //
+    virtual Result<std::span<SocketEvent>> Execute(Clock::duration timeout) = 0;
+
+    //
+    //
+    //
+    virtual Result<void> Remove(
+        Socket sock,
+        SocketOperation events) = 0;
+
+    //
+    //
+    //
+    virtual Result<void> Start() = 0;
+
+    //
+    //
+    //
+    virtual void Stop() = 0;
+
+    //
+    //
+    //
+    virtual void Stop(std::function<void(void)> fn) = 0;
+
+protected:
+    SocketService() = default;
+};
 
 }  // namespace Fusion
 
