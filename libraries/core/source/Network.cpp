@@ -1493,6 +1493,32 @@ std::ostream& operator<<(
 }
 // SocketAddress                                             END
 // -------------------------------------------------------------
+// AddressInfo                                             START
+void Internal::MapAddressInfo(
+    const AddressInfo& addr,
+    struct addrinfo& info)
+{
+    memset(&info, 0, ADDRINFO_LEN);
+
+    info.ai_flags = GetAddressInfoFlags(addr.flags);
+
+    info.ai_family = ((addr.family != AddressFamily::None))
+        ? GetAddressFamily(addr.family)
+        : GetAddressFamily(AddressFamily::Unspecified);
+
+    info.ai_protocol = ((addr.protocol != SocketProtocol::None))
+        ? GetSocketProtocol(addr.protocol)
+        : 0;
+
+    info.ai_socktype = ((addr.type != SocketType::None))
+        ? GetSocketType(addr.type)
+        : 0;
+
+    info.ai_addrlen = 0;
+    info.ai_addr = nullptr;
+    info.ai_next = nullptr;
+}
+// AddressInfo                                               END
 // Network                                                 START
 Result<std::unique_ptr<Network>> Network::Create()
 {

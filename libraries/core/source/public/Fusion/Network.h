@@ -1176,6 +1176,17 @@ namespace SocketOptions
 //
 //
 //
+struct AddressInfo
+{
+    AddressInfoFlags flags{ AddressInfoFlags::None };
+    AddressFamily family{ AddressFamily::None };
+    SocketType type{ SocketType::None };
+    SocketProtocol protocol{ SocketProtocol::None };
+    SocketAddress address;
+};
+//
+//
+//
 class Network
 {
 public:

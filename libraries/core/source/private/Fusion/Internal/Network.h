@@ -131,6 +131,11 @@ constexpr size_t ADDR4_SOCKLEN = sizeof(sockaddr_in);
 constexpr size_t ADDR6_SOCKLEN = sizeof(sockaddr_in6);
 
 //
+// Storage size required for a ADDRINFO structure.
+//
+constexpr size_t ADDRINFO_LEN = sizeof(struct addrinfo);
+
+//
 // Storage size required for a UNIX address structure
 // This value is set to 0 on platforms which do not support unix:// style
 // sockets.
@@ -215,4 +220,10 @@ int32_t GetSocketType(SocketType type);
 // values.
 //
 SocketType GetSocketType(int32_t type);
+
+//
+// Map the fields of the system addrinfo structure to the AddressInfo
+// structure.
+//
+void MapAddressInfo(const AddressInfo& addr, struct addrinfo& info);
 }  // namespace Fusion

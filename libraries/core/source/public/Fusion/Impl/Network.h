@@ -313,3 +313,21 @@ struct fmt::formatter<Fusion::SocketType>
             ctx);
     }
 };
+
+template<>
+struct fmt::formatter<Fusion::AddressInfo>
+    : fmt::formatter<Fusion::SocketAddress>
+{
+    // Out of order because it relies on the formatter for
+    // SocketAddress already being defined
+
+    template<typename Context>
+    auto format(
+        const Fusion::AddressInfo& address,
+        Context& ctx)
+    {
+        return formatter<Fusion::SocketAddress>::format(
+            address.address,
+            ctx);
+    }
+};
