@@ -161,4 +161,20 @@ Result<void> Internal::Ioctl::SetOption(
     return Failure{ E_NOT_SUPPORTED };
 }
 // Ioctl                                                     END
+// -------------------------------------------------------------
+// Poll                                                    START
+Result<size_t> Poll(
+    PollFd& fds,
+    size_t count,
+    Clock::duration timeout)
+{
+    FUSION_UNUSED(fds);
+    FUSION_UNUSED(count);
+    FUSION_UNUSED(timeout);
+
+    return Failure(E_NOT_IMPLEMENTED);
+}
+// Poll                                                       END
+// --------------------------------------------------------------
+}  // namespace Fusion
 #endif

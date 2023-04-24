@@ -1745,4 +1745,13 @@ Socket SocketPair::Writer() const
 }
 // SocketPair                                                END
 // -------------------------------------------------------------
+// Poll                                                    START
+Result<size_t> Poll(
+    PollFd& fd,
+    Clock::duration timeout)
+{
+    return Poll(&fd, 1, timeout);
+}
+// Poll                                                      END
+// -------------------------------------------------------------
 }  // namespace Fusion

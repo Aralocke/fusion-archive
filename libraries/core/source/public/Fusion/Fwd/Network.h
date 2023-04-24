@@ -47,6 +47,7 @@ constexpr Socket INVALID_SOCKET = Socket(-1);
 
 struct MulticastGroup;
 struct ParsedAddress;
+struct PollFd;
 
 class InetAddress;
 class Inet6Address;

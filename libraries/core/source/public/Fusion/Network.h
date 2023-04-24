@@ -1454,6 +1454,32 @@ private:
     Socket m_sockets[2]{ INVALID_SOCKET, INVALID_SOCKET };
     Network& m_network;
 };
+
+//
+//
+//
+struct PollFd
+{
+    Socket sock{ INVALID_SOCKET };
+    PollFlags events{ PollFlags::None };
+    void* userData{ nullptr };
+};
+
+//
+//
+//
+Result<size_t> Poll(
+    PollFd* fds,
+    size_t count,
+    Clock::duration timeout);
+
+//
+//
+//
+Result<size_t> Poll(
+    PollFd& fd,
+    Clock::duration timeout);
+
 }  // namespace Fusion
 
 #define FUSION_IMPL_NETWORK 1

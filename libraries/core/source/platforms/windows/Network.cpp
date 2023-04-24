@@ -202,6 +202,71 @@ std::string_view ToString(
 }
 // Inet6Address                                              END
 // -------------------------------------------------------------
+// Poll                                                    START
+Result<size_t> Poll(
+    PollFd* fds,
+    size_t count,
+    Clock::duration timeout)
+{
+    using namespace Fusion::Internal;
+
+    constexpr size_t MAX_POLL_FDS = 512;
+
+    size_t events = 0;
+
+    if (count > MAX_POLL_FDS)
+    {
+        // TODO: Log a warning that only the first 'MAX_POLL_FDS' will
+        //       be polled per-call.
+    }
+
+    count = std::min(count, MAX_POLL_FDS);
+
+    std::vector<WSAPOLLFD> pollFds(count);
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        WSAPOLLFD& fd = pollFds[i];
+
+        fd.fd = fds[i].sock;
+        fd.revents = 0;
+        fd.events = int16_t(GetPollFlags(fds[i].events));
+    }
+
+    int32_t timeoutMs = -1;
+    if (timeout.count() >= 0)
+    {
+        using namespace std::chrono;
+
+        timeoutMs = int32_t(duration_cast<milliseconds>(timeout).count());
+    }
+
+    auto start = Clock::now();
+
+    int res = WSAPoll(
+        pollFds.data(),
+        ULONG(count),
+        timeoutMs);
+
+    auto stop = Clock::now();
+
+    if (res == SOCKET_ERROR)
+    {
+        return Failure(WSAGetLastError());
+    }
+
+    if (res > 0)
+    {
+        for (size_t i = 0; i < count; ++i)
+        {
+            fds[i].events = GetPollFlags(pollFds[i].revents);
+        }
+    }
+
+    return size_t(res);
+}
+// Poll                                                      END
+// -------------------------------------------------------------
 // Ioctl                                                   START
 Result<void> Internal::Ioctl::SetOption(
     Socket sock,
