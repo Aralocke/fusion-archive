@@ -131,6 +131,22 @@ SocketOption<T, opt>::SocketOption(T value)
     : data(value)
     , size(sizeof(T))
 { }
+
+template<typename T, SocketOpt opt>
+Result<void> Network::GetSocketOption(
+    Socket sock,
+    SocketOption<T, opt> option) const
+{
+    return Failure(E_NOT_IMPLEMENTED);
+}
+
+template<typename T, SocketOpt opt>
+Result<void> Network::SetSocketOption(
+    Socket sock,
+    SocketOption<T, opt> option) const
+{
+    return Failure(E_NOT_IMPLEMENTED);
+}
 }  // namespace Fusion
 
 template<>

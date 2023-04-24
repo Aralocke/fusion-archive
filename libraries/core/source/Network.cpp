@@ -22,6 +22,8 @@
 #include <Fusion/MemoryUtil.h>
 #include <Fusion/StringUtil.h>
 
+#include <Fusion/Internal/StandardNetwork.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -39,7 +41,7 @@ int32_t Internal::GetAddressFamily(AddressFamily family)
         AF_INET6,
         AF_UNIX,
     };
-        
+
     return s_addressFamily[size_t(family)];
 }
 
@@ -1486,4 +1488,59 @@ std::ostream& operator<<(
     return o << ToString(address);
 }
 // SocketAddress                                             END
+// -------------------------------------------------------------
+// Network                                                 START
+Result<std::unique_ptr<Network>> Network::Create()
+{
+    using namespace Fusion::Internal;
+
+    auto network = std::make_unique<StandardNetwork>();
+
+    if (auto result = network->Start(); !result)
+    {
+        return result.Error();
+    }
+
+    return network;
+}
+
+Result<Socket> Network::CreateSocket(SocketConfig config) const
+{
+    return CreateSocket(config.family, config.protocol, config.type);
+}
+
+Result<size_t> Network::Recv(
+    Socket sock,
+    void* buffer,
+    size_t length) const
+{
+    return Recv(sock, buffer, length, MessageOption::None);
+}
+
+Result<Network::RecvFromData> Network::RecvFrom(
+    Socket sock,
+    void* buffer,
+    size_t length) const
+{
+    return RecvFrom(sock, buffer, length, MessageOption::None);
+}
+
+Result<size_t> Network::Send(
+    Socket sock,
+    const void* buffer,
+    size_t length) const
+{
+    return Send(sock, buffer, length, MessageOption::None);
+}
+
+Result<size_t> Network::SendTo(
+    Socket sock,
+    const SocketAddress& address,
+    const void* buffer,
+    size_t length) const
+{
+    return SendTo(sock, address, buffer, length, MessageOption::None);
+}
+// Network                                                   END
+// -------------------------------------------------------------
 }  // namespace Fusion

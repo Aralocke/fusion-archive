@@ -50,7 +50,7 @@ struct ParsedAddress;
 
 class InetAddress;
 class Inet6Address;
-class SocketConfig;
+class Network;
 class SocketAddress;
 
 template<typename, SocketOpt> class SocketOption;

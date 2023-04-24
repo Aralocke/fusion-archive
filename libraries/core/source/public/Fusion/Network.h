@@ -1170,6 +1170,227 @@ namespace SocketOptions
     using TimeToLive = SocketOption<int32_t, SocketOpt::TimeToLive>;
 };
 
+//
+//
+//
+class Network
+{
+public:
+    Network(const Network&) = delete;
+    Network& operator=(const Network&) = delete;
+
+public:
+    static Result<std::unique_ptr<Network>> Create();
+
+    Network() = default;
+    virtual ~Network() = default;
+
+public:
+
+    //
+    //
+    //
+    struct AcceptedSocketData
+    {
+        Socket sock;
+        SocketAddress address;
+    };
+
+    //
+    //
+    //
+    struct RecvFromData
+    {
+        size_t received = 0;
+        SocketAddress address;
+        void* buffer = nullptr;
+        size_t size = 0;
+    };
+
+public:
+
+    //
+    //
+    //
+    virtual Result<AcceptedSocketData> Accept(Socket sock) const = 0;
+
+    //
+    //
+    //
+    virtual Result<void> Bind(
+        Socket sock,
+        const SocketAddress& address) const = 0;
+
+    //
+    //
+    //
+    virtual Result<Socket> CreateSocket(
+        AddressFamily family,
+        SocketProtocol proto,
+        SocketType type) const = 0;
+
+    //
+    //
+    //
+    Result<Socket> CreateSocket(SocketConfig config) const;
+
+    //
+    //
+    //
+    virtual Result<void> Connect(
+        Socket client,
+        const SocketAddress& address) const = 0;
+
+    //
+    //
+    //
+    virtual Result<void> Close(Socket sock) const = 0;
+
+    //
+    //
+    //
+    virtual Result<SocketAddress> GetPeerName(Socket sock) const = 0;
+
+    //
+    //
+    //
+    virtual Result<SocketAddress> GetSockName(Socket sock) const = 0;
+
+    //
+    //
+    //
+    virtual Result<void> GetSocketOption(
+        Socket sock,
+        SocketOpt option,
+        void* data,
+        size_t size) const = 0;
+
+    //
+    //
+    //
+    template<typename T, SocketOpt opt>
+    Result<void> GetSocketOption(
+        Socket sock,
+        SocketOption<T, opt> option) const;
+
+    //
+    //
+    //
+    virtual Result<void> Listen(
+        Socket sock,
+        uint32_t backlog) const = 0;
+
+    //
+    //
+    //
+    virtual Result<size_t> Recv(
+        Socket sock,
+        void* buffer,
+        size_t size,
+        MessageOption flags) const = 0;
+
+    //
+    //
+    //
+    Result<size_t> Recv(
+        Socket sock,
+        void* buffer,
+        size_t size) const;
+
+    //
+    //
+    //
+    virtual Result<RecvFromData> RecvFrom(
+        Socket sock,
+        void* buffer,
+        size_t size,
+        MessageOption flags) const = 0;
+
+    //
+    //
+    //
+    Result<RecvFromData> RecvFrom(
+        Socket sock,
+        void* buffer,
+        size_t size) const;
+
+    //
+    //
+    //
+    virtual Result<size_t> Send(
+        Socket sock,
+        const void* buffer,
+        size_t size,
+        MessageOption flags) const = 0;
+
+    //
+    //
+    //
+    Result<size_t> Send(
+        Socket sock,
+        const void* buffer,
+        size_t size) const;
+
+    //
+    //
+    //
+    virtual Result<size_t> SendTo(
+        Socket sock,
+        const SocketAddress& address,
+        const void* buffer,
+        size_t size,
+        MessageOption flags) const = 0;
+
+    //
+    //
+    //
+    Result<size_t> SendTo(
+        Socket sock,
+        const SocketAddress& address,
+        const void* buffer,
+        size_t size) const;
+
+    //
+    //
+    //
+    virtual Result<void> SetBlocking(
+        Socket sock,
+        bool blocking) const = 0;
+
+    //
+    //
+    //
+    virtual Result<void> SetSocketOption(
+        Socket sock,
+        SocketOpt option,
+        const void* data,
+        size_t size) const = 0;
+
+    //
+    //
+    //
+    template<typename T, SocketOpt opt>
+    Result<void> SetSocketOption(
+        Socket sock,
+        SocketOption<T, opt> option) const;
+
+    //
+    //
+    //
+    virtual Result<void> Start() = 0;
+
+    //
+    //
+    //
+    virtual void Stop() = 0;
+
+    //
+    //
+    //
+    virtual Result<void> Shutdown(
+        Socket sock,
+        SocketShutdownMode mode) const = 0;
+};
 }  // namespace Fusion
 
 #define FUSION_IMPL_NETWORK 1
