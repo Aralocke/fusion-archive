@@ -1391,6 +1391,69 @@ public:
         Socket sock,
         SocketShutdownMode mode) const = 0;
 };
+
+//
+//
+//
+class SocketPair final
+{
+public:
+    SocketPair(const SocketPair&) = delete;
+    SocketPair& operator=(const SocketPair&) = delete;
+
+public:
+    enum class Type : uint8_t
+    {
+        Blocking,
+        NonBlocking,
+
+        Default = NonBlocking,
+    };
+
+public:
+    static Result<std::unique_ptr<SocketPair>> Create(
+        Network& net,
+        Type blocking = Type::Default);
+
+    //
+    //
+    //
+    SocketPair(Network& net);
+
+    //
+    //
+    //
+    ~SocketPair();
+
+    //
+    //
+    //
+    Result<void> Drain();
+
+    //
+    //
+    //
+    Socket Reader() const;
+
+    //
+    //
+    //
+    Result<void> Start(Type blocking = Type::NonBlocking);
+
+    //
+    //
+    //
+    void Stop();
+
+    //
+    //
+    //
+    Socket Writer() const;
+
+private:
+    Socket m_sockets[2]{ INVALID_SOCKET, INVALID_SOCKET };
+    Network& m_network;
+};
 }  // namespace Fusion
 
 #define FUSION_IMPL_NETWORK 1

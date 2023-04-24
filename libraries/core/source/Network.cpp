@@ -1543,4 +1543,206 @@ Result<size_t> Network::SendTo(
 }
 // Network                                                   END
 // -------------------------------------------------------------
+// SocketPair                                              START
+Result<std::unique_ptr<SocketPair>> SocketPair::Create(
+    Network& net,
+    Type blocking)
+{
+    auto pair = std::make_unique<SocketPair>(net);
+
+    if (auto result = pair->Start(blocking); !result)
+    {
+        return result.Error();
+    }
+
+    return pair;
+}
+
+SocketPair::SocketPair(Network& net)
+    : m_network(net)
+{ }
+
+SocketPair::~SocketPair() { Stop(); }
+
+Result<void> SocketPair::Drain()
+{
+    if (m_sockets[0] == INVALID_SOCKET)
+    {
+        return Failure{ E_NOT_INITIALIZED };
+    }
+
+    std::array<char, 16U> buffer = { 0 };
+
+    while (true)
+    {
+        if (auto result = m_network.Recv(
+            Reader(),
+            buffer.data(),
+            buffer.size()); !result)
+        {
+            const auto& failure = result.Error();
+
+            if (failure.Error() != E_SUCCESS
+                && failure.Error() != E_NET_WOULD_BLOCK)
+            {
+                return failure;
+            }
+            if (failure.Error() == E_NET_WOULD_BLOCK)
+            {
+                break;
+            }
+        }
+        else if (*result > 0)
+        {
+            continue;
+        }
+    }
+
+    return Success;
+}
+
+Socket SocketPair::Reader() const
+{
+    return m_sockets[0];
+}
+
+Result<void> SocketPair::Start(Type blocking)
+{
+    if (m_sockets[0] != INVALID_SOCKET)
+    {
+        return Success;
+    }
+
+    Socket read{ INVALID_SOCKET };
+    Socket write{ INVALID_SOCKET };
+
+    FUSION_SCOPE_GUARD([&] { m_network.Close(read); });
+
+    if (auto result = m_network.CreateSocket(TCPv4); !result)
+    {
+        return result.Error()
+            .WithContext("failed to initialize notify listener");
+    }
+    else
+    {
+        // Set the newly created socket to the correct temporary.
+        read = std::move(*result);
+    }
+
+    SocketAddress address{ InaddrLoopback, 0 };
+    if (auto result = m_network.Bind(read, address); !result)
+    {
+        return result.Error()
+            .WithContext("failed to bind notification listener '{}' to '{}'",
+                read, address);
+    }
+    if (auto result = m_network.Listen(read, 1); !result)
+    {
+        return result.Error()
+            .WithContext("failed to listen on notification listener '{}'",
+                read);
+    }
+
+    SocketAddress remote;
+    {
+        if (auto result = m_network.GetSockName(read); !result)
+        {
+            return result.Error()
+                .WithContext("failed to determine listening socket name '{}'",
+                    read);
+        }
+        else
+        {
+            remote = std::move(*result);
+        }
+    }
+    if (auto result = m_network.CreateSocket(TCPv4); !result)
+    {
+        return result.Error()
+            .WithContext("failed to initialize notify writer");
+    }
+    else
+    {
+        write = *result;
+    }
+    if (auto result = m_network.Connect(write, remote); !result)
+    {
+        return result.Error()
+            .WithContext("failed to connect notify writer '{}'", write);
+    }
+    if (auto result = m_network.SetBlocking(write, false); !result)
+    {
+        return result.Error()
+            .WithContext("failed to set non-blocking on notification writer '{}'", write);
+    }
+
+    if (auto result = m_network.Accept(read); !result)
+    {
+        return result.Error()
+            .WithContext("failed to connect read end of the notify pair '{}'", read);
+    }
+    else
+    {
+        m_sockets[0] = result->sock;
+    }
+
+    bool _blocking{ false };
+
+    switch (blocking)
+    {
+    case Type::NonBlocking:
+        _blocking = false;
+        break;
+    case Type::Blocking:
+        _blocking = true;
+        break;
+    }
+
+    m_sockets[1] = write;
+    if (auto result = m_network.SetBlocking(Writer(), _blocking); !result)
+    {
+        return result.Error()
+            .WithContext("failed to set non-blocking on notification writer '{}'", write);
+    }
+    if (auto result = m_network.SetBlocking(Reader(), _blocking); !result)
+    {
+        return result.Error()
+            .WithContext("failed to set non-blocking on notification listener '{}'",
+                m_sockets[0]);
+    }
+
+    return Success;
+}
+
+void SocketPair::Stop()
+{
+    Stop(nullptr);
+}
+
+void SocketPair::Stop(std::function<void(Failure&)> fn)
+{
+    if (Socket& reader = m_sockets[0]; reader != INVALID_SOCKET)
+    {
+        m_network.Close(reader);
+        reader = INVALID_SOCKET;
+    }
+    if (Socket& writer = m_sockets[1]; writer != INVALID_SOCKET)
+    {
+        m_network.Close(writer);
+        writer = INVALID_SOCKET;
+    }
+    if (fn)
+    {
+        Failure f(E_SUCCESS);
+
+        fn(f);
+    }
+}
+
+Socket SocketPair::Writer() const
+{
+    return m_sockets[1];
+}
+// SocketPair                                                END
+// -------------------------------------------------------------
 }  // namespace Fusion
