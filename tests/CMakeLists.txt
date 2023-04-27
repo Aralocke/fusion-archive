@@ -18,7 +18,11 @@ project(FusionTests LANGUAGES CXX)
 set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/public)
 
+add_subdirectory(tools)
+
 add_executable(FusionTests)
+add_dependencies(FusionTests TestLibrary)
+
 target_include_directories(FusionTests
     PUBLIC
         ${PROJECT_INCLUDE_DIR}
@@ -49,6 +53,13 @@ endif()
 
 target_sources(FusionTests
     PRIVATE ${PUBLIC_HEADERS} ${SOURCES})
+
+target_compile_definitions(FusionTests
+    PUBLIC
+        FUSION_BUILD_PLATFORM=${FUSION_BUILD_PLATFORM}
+        FUSION_BUILD_ARCH=${FUSION_BUILD_ARCH}
+        FUSION_BUILD_CONFIG=$<CONFIG>
+)
 
 target_link_libraries(FusionTests
     PRIVATE Fusion::Core gtest)
