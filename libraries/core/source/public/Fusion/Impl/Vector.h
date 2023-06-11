@@ -21,7 +21,9 @@
 #endif
 
 #include <Fusion/Assert.h>
+
 #include <algorithm>
+#include <utility>
 
 namespace Fusion
 {

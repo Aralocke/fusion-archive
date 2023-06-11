@@ -74,7 +74,7 @@ ifndef CMAKE
 endif
 
 check-toolchain:
-	@if [ ! -f Build/CMake/Toolchains/$(TOOLCHAIN).cmake ]; then \
+	@if [ ! -f build/CMake/Toolchains/$(TOOLCHAIN).cmake ]; then \
 		echo >&2 "Toolchain does not exist for '$(TOOLCHAIN)'"; \
 		exit 1; \
 	fi
@@ -88,149 +88,171 @@ linux-build-all: linux-build-debug linux-build-release linux-build-releasedbg \
 	linux-build-public linux-build-asan linux-build-ubsan
 
 linux-build-asan: linux-cmake-asan
-	cd tmp/Linux/$(ARCH)-Asan && \
+	cd tmp/Linux/$(ARCH)-Asan-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config ASAN \
 			--parallel $(NPROC)
 
 linux-build-debug: linux-cmake-debug
-	cd tmp/Linux/$(ARCH)-Debug && \
+	cd tmp/Linux/$(ARCH)-Debug-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config DEBUG \
 			--parallel $(NPROC)
 
 linux-build-public: linux-cmake-public
-	cd tmp/Linux/$(ARCH)-Public && \
+	cd tmp/Linux/$(ARCH)-Public-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config MINSIZEREL \
 			--parallel $(NPROC)
 
 linux-build-release: linux-cmake-release
-	cd tmp/Linux/$(ARCH)-Release && \
+	cd tmp/Linux/$(ARCH)-Release-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config RELEASE \
 			--parallel $(NPROC)
 
 linux-build-releasedbg: linux-cmake-releasedbg
-	cd tmp/Linux/$(ARCH)-ReleaseDbg && \
+	cd tmp/Linux/$(ARCH)-ReleaseDbg-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config RELWITHDEBINFO \
 			--parallel $(NPROC)
 
 linux-build-ubsan: linux-cmake-ubsan
-	cd tmp/Linux/$(ARCH)-Ubsan && \
+	cd tmp/Linux/$(ARCH)-Ubsan-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config UBSAN \
 			--parallel $(NPROC)
 
-linux-clean: check-dir linux-clean-debug linux-clean-release linux-clean-releasedbg \
+linux-clean-all: check-dir linux-clean-debug linux-clean-release linux-clean-releasedbg \
 	linux-clean-public linux-clean-asan linux-clean-ubsan
 
 linux-clean-asan: linux-cmake-asan
-	cd tmp/Linux/$(ARCH)-Asan && \
+	cd tmp/Linux/$(ARCH)-Asan-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config ASAN \
 			--target clean
 
 linux-clean-debug: linux-cmake-debug
-	cd tmp/Linux/$(ARCH)-Debug && \
+	cd tmp/Linux/$(ARCH)-Debug-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config DEBUG \
 			--target clean
 
 linux-clean-public: linux-cmake-public
-	cd tmp/Linux/$(ARCH)-Public && \
+	cd tmp/Linux/$(ARCH)-Public-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config MINSIZEREL \
 			--target clean
 
 linux-clean-release: linux-cmake-release
-	cd tmp/Linux/$(ARCH)-Release && \
+	cd tmp/Linux/$(ARCH)-Release-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config RELEASE \
 			--target clean
 
 linux-clean-releasedbg: linux-cmake-releasedbg
-	cd tmp/Linux/$(ARCH)-ReleaseDbg && \
+	cd tmp/Linux/$(ARCH)-ReleaseDbg-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config RELWITHDEBINFO \
 			--target clean
 
 linux-clean-ubsan: linux-cmake-ubsan
-	cd tmp/Linux/$(ARCH)-Ubsan && \
+	cd tmp/Linux/$(ARCH)-Ubsan-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config UBSAN \
 			--target clean
 
 linux-cmake-asan: check-toolchain
-	@mkdir -p tmp/Linux/$(ARCH)-Asan
-	cd tmp/Linux/$(ARCH)-Asan && \
+	@mkdir -p tmp/Linux/$(ARCH)-Asan-$(TOOLCHAIN)
+	cd tmp/Linux/$(ARCH)-Asan-$(TOOLCHAIN) && \
 		$(CMAKE) -G "Unix Makefiles" \
 			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
 			-DCMAKE_BUILD_TYPE:STRING=ASAN \
-			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../Build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
 			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
 			../../../
 
 linux-cmake-debug: check-toolchain
-	@mkdir -p tmp/Linux/$(ARCH)-Debug
-	cd tmp/Linux/$(ARCH)-Debug && \
+	@mkdir -p tmp/Linux/$(ARCH)-Debug-$(TOOLCHAIN)
+	cd tmp/Linux/$(ARCH)-Debug-$(TOOLCHAIN) && \
 		$(CMAKE) -G "Unix Makefiles" \
 			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
 			-DCMAKE_BUILD_TYPE:STRING=Debug \
-			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../Build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
 			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
 			../../../
 
 linux-cmake-public: check-toolchain
-	@mkdir -p tmp/Linux/$(ARCH)-Public
-	cd tmp/Linux/$(ARCH)-Public && \
+	@mkdir -p tmp/Linux/$(ARCH)-Public-$(TOOLCHAIN)
+	cd tmp/Linux/$(ARCH)-Public-$(TOOLCHAIN) && \
 		$(CMAKE) -G "Unix Makefiles" \
 			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
 			-DCMAKE_BUILD_TYPE:STRING=MINSIZEREL \
-			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../Build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
 			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
 			../../../
 
 linux-cmake-release: check-toolchain
-	@mkdir -p tmp/Linux/$(ARCH)-Release
-	cd tmp/Linux/$(ARCH)-Release && \
+	@mkdir -p tmp/Linux/$(ARCH)-Release-$(TOOLCHAIN)
+	cd tmp/Linux/$(ARCH)-Release-$(TOOLCHAIN) && \
 		$(CMAKE) -G "Unix Makefiles" \
 			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
 			-DCMAKE_BUILD_TYPE:STRING=RELEASE \
-			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../Build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
 			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
 			../../../
 
 linux-cmake-releasedbg: check-toolchain
-	@mkdir -p tmp/Linux/$(ARCH)-ReleaseDbg
-	cd tmp/Linux/$(ARCH)-ReleaseDbg && \
+	@mkdir -p tmp/Linux/$(ARCH)-ReleaseDbg-$(TOOLCHAIN)
+	cd tmp/Linux/$(ARCH)-ReleaseDbg-$(TOOLCHAIN) && \
 		$(CMAKE) -G "Unix Makefiles" \
 			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
 			-DCMAKE_BUILD_TYPE:STRING=RELWITHDEBINFO \
-			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../Build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
 			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
 			../../../
 
 linux-cmake-ubsan: check-toolchain
-	@mkdir -p tmp/Linux/$(ARCH)-Ubsan
-	cd tmp/Linux/$(ARCH)-Ubsan && \
+	@mkdir -p tmp/Linux/$(ARCH)-Ubsan-$(TOOLCHAIN)
+	cd tmp/Linux/$(ARCH)-Ubsan-$(TOOLCHAIN) && \
 		$(CMAKE) -G "Unix Makefiles" \
 			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
 			-DCMAKE_BUILD_TYPE:STRING=UBSAN \
-			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../Build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
+			../../../
+
+#
+# OSX Build Targets
+#
+osx-build-all: linux-build-debug
+
+osx-build-debug: osx-cmake-debug
+	cd tmp/OSX/$(ARCH)-Debug-$(TOOLCHAIN) && \
+		$(CMAKE) \
+			--build . \
+			--config DEBUG \
+			--parallel $(NPROC)
+
+osx-cmake-debug: check-toolchain
+	@mkdir -p tmp/OSX/$(ARCH)-Debug-$(TOOLCHAIN)
+	cd tmp/OSX/$(ARCH)-Debug-$(TOOLCHAIN) && \
+		$(CMAKE) -G "Unix Makefiles" \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
+			-DCMAKE_BUILD_TYPE:STRING=Debug \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
 			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
 			../../../
 

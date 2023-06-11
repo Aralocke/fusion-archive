@@ -30,10 +30,12 @@ ErrorCode GetLastError()
     return static_cast<ErrorCode>(errno);
 }
 
-#if FUSION_COMPILER_GCC
+FUSION_PUSH_WARNINGS()
+FUSION_DISABLE_GCC_CLANG_WARNING("-Wunused-function")
+
 // The version of strerror_r on GNU compilers returns a 'const char*' rather
 // than an intger of the length.
-static std::string_view ToString(char* buffer, size_t length, const char* src)
+static std::string_view ErrorToString(char* buffer, size_t length, const char* src)
 {
     if (src != buffer)
     {
@@ -41,14 +43,15 @@ static std::string_view ToString(char* buffer, size_t length, const char* src)
     }
     return { buffer };
 }
-#else
-static std::string_view ToString(char* buffer, size_t length, int size)
+
+static std::string_view ErrorToString(char* buffer, size_t length, int size)
 {
     FUSION_UNUSED(length);
 
-    return {buffer, size_t(size) };
+    return { buffer, size_t(size) };
 }
-#endif
+
+FUSION_POP_WARNINGS()
 
 std::string_view ToString(
     ErrorCode platformCode,
@@ -56,7 +59,7 @@ std::string_view ToString(
     size_t length)
 {
     buffer[0] = 0;
-    return ToString(buffer, length, strerror_r(platformCode, buffer, length));
+    return ErrorToString(buffer, length, strerror_r(platformCode, buffer, length));
 }
 
 Error Error::Errno(ErrorCode platformCode)

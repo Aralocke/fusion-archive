@@ -24,7 +24,7 @@
 
 namespace Fusion
 {
-template<typename T, FUSION_REQUIRES(std::is_pod_v<T>)>
+template<typename T, FUSION_REQUIRES(std::is_standard_layout_v<T> && std::is_trivial_v<T>)>
 bool IsEmpty(const T* elements, size_t count)
 {
     for (size_t i = 0; i < count; ++i)

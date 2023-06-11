@@ -110,11 +110,11 @@ void SocketServiceTests::QueueRead(
     Connection& c,
     size_t size)
 {
-    if (!(+(c.ops, SocketOperation::Read)))
+    if (!(+(c.ops & SocketOperation::Read)))
     {
         c.ops |= SocketOperation::Read;
     }
-    if (!(+(c.ops, SocketOperation::Error)))
+    if (!(+(c.ops & SocketOperation::Error)))
     {
         c.ops |= SocketOperation::Error;
     }
@@ -130,11 +130,11 @@ void SocketServiceTests::QueueWrite(
     Connection& c,
     std::span<char> data)
 {
-    if (!(+(c.ops, SocketOperation::Write)))
+    if (!(+(c.ops & SocketOperation::Write)))
     {
         c.ops |= SocketOperation::Write;
     }
-    if (!(+(c.ops, SocketOperation::Error)))
+    if (!(+(c.ops & SocketOperation::Error)))
     {
         c.ops |= SocketOperation::Error;
     }

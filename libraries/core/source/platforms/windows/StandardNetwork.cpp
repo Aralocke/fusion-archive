@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 
-#include <fusion/internal/StandardNetwork.h>
+#include <Fusion/Internal/StandardNetwork.h>
 
 #if FUSION_PLATFORM_WINDOWS
 
@@ -25,11 +25,9 @@
 
 namespace Fusion::Internal
 {
-StandardNetwork::StandardNetwork()
-{ }
+StandardNetwork::StandardNetwork() = default;
 
-StandardNetwork::~StandardNetwork()
-{ }
+StandardNetwork::~StandardNetwork() = default;
 
 Result<Network::AcceptedSocketData>
 StandardNetwork::Accept(Socket server) const

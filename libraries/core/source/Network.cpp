@@ -209,6 +209,8 @@ std::string_view ToString(AddressInfoFlags flag)
         return "Passive"sv;
     case AddressInfoFlags::All:
         return "All"sv;
+    default:
+        break;
     }
 
     return "None"sv;
@@ -280,6 +282,8 @@ std::string_view ToString(MessageOption option)
         return "Peek"sv;
     case MessageOption::None:
         return "None"sv;
+    default:
+        break;
     }
 
     return "None"sv;
@@ -382,6 +386,8 @@ std::string_view ToString(PollFlags flags)
         return "Read"sv;
     case PollFlags::Write:
         return "Write"sv;
+    default:
+        break;
     }
 
     return "None"sv;
@@ -445,6 +451,8 @@ std::string_view ToString(SocketOperation operations)
         return "Read"sv;
     case SocketOperation::Write:
         return "Write"sv;
+    default:
+        break;
     }
 
     return "None"sv;
@@ -528,7 +536,11 @@ int32_t Internal::GetSocketOpt(SocketOpt option)
         int32_t(SO_ERROR),           // SocketError
         int32_t(TCP_KEEPALIVE),      // TcpKeepAlive
         int32_t(TCP_KEEPCNT),        // TcpKeepCount
-        int32_t(TCP_KEEPIDLE),       // TcpKeepIdle
+#if FUSION_PLATFORM_WINDOWS
+        int32_t(TCP_KEEPIDLE),            // TcpKeepIdle
+#else
+        int32_t(-1),                 // TcpKeepIdle
+#endif
         int32_t(TCP_KEEPINTVL),      // TcpKeepInterval
         int32_t(IP_TTL),             // TimeToLive
     };
@@ -618,6 +630,8 @@ SocketProtocol Internal::GetSocketProtocol(int32_t protocol)
         return SocketProtocol::Raw;
     case int32_t(IPPROTO_NONE):
         return SocketProtocol::None;
+    default:
+        break;
     }
 
     return SocketProtocol::None;
@@ -711,6 +725,8 @@ SocketType Internal::GetSocketType(int32_t type)
         return SocketType::Raw;
     case int32_t(SOCK_STREAM):
         return SocketType::Stream;
+    default:
+        break;
     }
 
     return SocketType::None;
@@ -770,7 +786,7 @@ Result<void> InetAddress::FromString(std::string_view address)
             .WithContext("invalid input address '{}'", address);
     }
 
-    struct sockaddr_in saddr;
+    struct sockaddr_in saddr{};
     memset(&saddr, 0, ADDR4_SOCKLEN);
 
     std::string str(address);
@@ -800,7 +816,7 @@ Inet6Address InetAddress::AsV6() const
         return {};
     }
 
-    Inet6Address address;
+    Inet6Address address{};
     {
         uint8_t* addr = address.Data();
 
@@ -907,7 +923,7 @@ Result<void> Inet6Address::FromString(std::string_view address)
             .WithContext("invalid input address '{}'", address);
     }
 
-    struct sockaddr_in6 saddr;
+    struct sockaddr_in6 saddr{};
     memset(&saddr, 0, ADDR6_SOCKLEN);
 
     std::string str(address);
@@ -938,7 +954,7 @@ InetAddress Inet6Address::AsV4() const
         return InetAddress{};
     }
 
-    InetAddress address;
+    InetAddress address{};
     {
         uint8_t* addr = address.Data();
 
@@ -1036,16 +1052,22 @@ std::ostream& operator<<(std::ostream& o, const Inet6Address& address)
 // ParseAddress                                            START
 Result<ParsedAddress> ParseAddress(std::string_view address)
 {
-    InetAddress addr4;
+    InetAddress addr4{};
     if (auto result = addr4.FromString(address); result)
     {
-        return ParsedAddress{ addr4, AddressFamily::Inet4 };
+        return ParsedAddress{
+            .address = {addr4 },
+            .family = AddressFamily::Inet4
+        };
     }
 
-    Inet6Address addr6;
+    Inet6Address addr6{};
     if (auto result = addr6.FromString(address); result)
     {
-        return ParsedAddress{ addr6, AddressFamily::Inet6 };
+        return ParsedAddress{
+            .address = {addr6},
+            .family = AddressFamily::Inet6
+        };
     }
 
     return Failure(E_INVALID_ARGUMENT)
@@ -1054,14 +1076,14 @@ Result<ParsedAddress> ParseAddress(std::string_view address)
 // ParseAddress                                              END
 // -------------------------------------------------------------
 // SocketAddress                                           START
-SocketAddress::SocketAddress(InetAddress addr, uint32_t port)
-    : m_family(AddressFamily::Inet4)
-    , m_address(std::in_place_type<InetAddr>, addr, uint16_t(port))
+SocketAddress::SocketAddress(InetAddress address, uint32_t port)
+    : m_address{ std::in_place_type<InetAddr>, address, uint16_t(port) }
+    , m_family{ AddressFamily::Inet4 }
 { }
 
-SocketAddress::SocketAddress(Inet6Address addr, uint32_t port)
-    : m_family(AddressFamily::Inet6)
-    , m_address(std::in_place_type<Inet6Addr>, addr, uint16_t(port))
+SocketAddress::SocketAddress(Inet6Address address, uint32_t port)
+    : m_address{ std::in_place_type<Inet6Addr>, address, uint16_t(port) }
+    , m_family{ AddressFamily::Inet6 }
 { }
 
 AddressFamily SocketAddress::Family() const
@@ -1118,13 +1140,14 @@ void SocketAddress::FromSockAddr(const sockaddr* addr)
         UnixAddr unAddr;
 
         const auto& un = *reinterpret_cast<const sockaddr_un*>(addr);
-        auto* a = unAddr.path.data();
-        size_t length = unAddr.path.size();
+        size_t length = StringUtil::Length(
+            unAddr.path,
+            SocketAddress::UnixAddr::LENGTH);
 
-        memset(a, 0, length);
-        memcpy(a, un.sun_path, length);
+        memset(unAddr.path, 0, length);
+        memcpy(unAddr.path, un.sun_path, length);
 
-        m_data = unAddr;
+        m_address = unAddr;
 #else
         FUSION_ASSERT(false, "Platform does not support UNIX sockets");
 #endif  // FUSION_PLATFORM_POSIX
@@ -1361,28 +1384,28 @@ const SocketAddress::UnixAddr& SocketAddress::Unix() const
     return std::get<UnixAddr>(m_address);
 }
 
-bool SocketAddress::operator==(const SocketAddress& saddr) const
+bool SocketAddress::operator==(const SocketAddress& address) const
 {
-    if (m_family == saddr.m_family)
+    if (m_family == address.m_family)
     {
         switch (m_family)
         {
         case AddressFamily::Inet4:
-            return Inet().port == saddr.Inet().port
+            return Inet().port == address.Inet().port
                 && MemoryUtil::Equal(
                     Inet().address.Data(),
-                    saddr.Inet().address.Data(),
+                    address.Inet().address.Data(),
                     InetAddress::SIZE);
         case AddressFamily::Inet6:
-            return Inet6().port == saddr.Inet6().port
+            return Inet6().port == address.Inet6().port
                 && MemoryUtil::Equal(
                     Inet6().address.Data(),
-                    saddr.Inet6().address.Data(),
+                    address.Inet6().address.Data(),
                     Inet6Address::SIZE);
         case AddressFamily::Unix:
             return MemoryUtil::Equal(
                 Unix().path,
-                saddr.Unix().path,
+                address.Unix().path,
                 UnixAddr::LENGTH);
         default:
             return false;
@@ -1391,33 +1414,33 @@ bool SocketAddress::operator==(const SocketAddress& saddr) const
     return false;
 }
 
-bool SocketAddress::operator!=(const SocketAddress& saddr) const
+bool SocketAddress::operator!=(const SocketAddress& address) const
 {
-    return !operator==(saddr);
+    return !operator==(address);
 }
 
-bool SocketAddress::operator<(const SocketAddress& saddr) const
+bool SocketAddress::operator<(const SocketAddress& address) const
 {
-    if (m_family == saddr.m_family)
+    if (m_family == address.m_family)
     {
         switch (m_family)
         {
         case AddressFamily::Inet4:
-            return Inet().port == saddr.Inet().port
+            return Inet().port == address.Inet().port
                 && MemoryUtil::Less(
                     Inet().address.Data(),
-                    saddr.Inet().address.Data(),
+                    address.Inet().address.Data(),
                     InetAddress::SIZE);
         case AddressFamily::Inet6:
-            return Inet6().port == saddr.Inet6().port
+            return Inet6().port == address.Inet6().port
                 && MemoryUtil::Less(
                     Inet6().address.Data(),
-                    saddr.Inet6().address.Data(),
+                    address.Inet6().address.Data(),
                     Inet6Address::SIZE);
         case AddressFamily::Unix:
             return MemoryUtil::Less(
                 Unix().path,
-                saddr.Unix().path,
+                address.Unix().path,
                 UnixAddr::LENGTH);
         default:
             return false;
@@ -1656,7 +1679,7 @@ Result<void> SocketPair::Start(Type blocking)
     else
     {
         // Set the newly created socket to the correct temporary.
-        read = std::move(*result);
+        read = *result;
     }
 
     SocketAddress address{ InaddrLoopback, 0 };
@@ -1683,7 +1706,7 @@ Result<void> SocketPair::Start(Type blocking)
         }
         else
         {
-            remote = std::move(*result);
+            remote = *result;
         }
     }
     if (auto result = m_network.CreateSocket(TCPv4); !result)
@@ -1785,19 +1808,19 @@ Result<size_t> Poll(
 // Poll                                                      END
 // -------------------------------------------------------------
 // SocketEvent                                             START
-bool SocketEvent::operator==(const Socket& sock) const
+bool SocketEvent::operator==(const Socket& s) const
 {
-    return this->sock == sock;
+    return this->sock == s;
 }
 
-bool SocketEvent::operator!=(const Socket& sock) const
+bool SocketEvent::operator!=(const Socket& s) const
 {
-    return this->sock != sock;
+    return this->sock != s;
 }
 
-bool SocketEvent::operator<(const Socket& sock) const
+bool SocketEvent::operator<(const Socket& s) const
 {
-    return this->sock < sock;
+    return this->sock < s;
 }
 // SocketEvent                                               END
 // -------------------------------------------------------------
@@ -1826,12 +1849,12 @@ Result<std::unique_ptr<SocketService>> SocketService::Create(
         break;
     }
 #else
-    case Type::IOCP:
+    case Type::Iocp:
         return Failure{ E_NOT_SUPPORTED };
 #endif
-#if FUSION_PLATFORM_POSIX
+#if FUSION_PLATFORM_LINUX
     case Type::Default:
-    case Type::EPOLL:
+    case Type::Epoll:
     {
         service = std::make_unique<EPollSocketService>(network);
         break;
@@ -1842,7 +1865,7 @@ Result<std::unique_ptr<SocketService>> SocketService::Create(
 #endif
 #if FUSION_PLATFORM_APPLE
     case Type::Default:
-    case Type::KQUEUE:
+    case Type::Kqueue:
         return std::make_unique<KQueueSocketService>(network);
 #else
     case Type::Kqueue:

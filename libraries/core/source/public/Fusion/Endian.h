@@ -40,7 +40,7 @@ public:
     //
     //
     template<typename T, FUSION_REQUIRES(std::is_unsigned_v<T>)>
-    constexpr T ConstSwap(T x, T result = 0, size_t step = 0)
+    static constexpr T ConstSwap(T x, T result = 0, size_t step = 0)
     {
         return step == sizeof(T)
             ? result
@@ -55,7 +55,7 @@ public:
 #if FUSION_COMPILER_MSVC
         return _byteswap_ushort(v);
 #else
-        return (x >> 8) | (x << 8);
+        return (v >> 8) | (v << 8);
 #endif
     }
 

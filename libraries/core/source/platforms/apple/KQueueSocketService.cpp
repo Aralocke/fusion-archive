@@ -46,6 +46,8 @@ void KQueueSocketService::Notify()
 Result<std::span<SocketEvent>>
 KQueueSocketService::Execute(Clock::duration timeout)
 {
+    FUSION_UNUSED(m_network);
+
     return Failure{ E_NOT_IMPLEMENTED };
 }
 

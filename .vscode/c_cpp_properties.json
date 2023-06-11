@@ -1,0 +1,52 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${includePaths}"
+            ],
+            "intelliSenseMode": "macos-clang-x64",
+            "browse": {
+                "path": [
+                    "${includePaths}",
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": "${workspaceFolder}/tmp/browse.vc.db"
+            },
+            "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++20"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "${default}",
+            "compileCommands": "${workspaceFolder}/tmp/Linux/X64-Debug-clang/compile_commands.json"
+        },
+        {
+            "name": "Win32",
+            "intelliSenseMode": "${default}",
+            "compilerPath": "cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++20",
+            "includePath": [
+              "${workspaceFolder}/**"
+            ],
+            "browse": {
+                "path": [
+                    "${includePaths}",
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": "${workspaceFolder}/tmp/browse.vc.db"
+            }
+          }
+    ],
+    "version": 4
+}

@@ -57,5 +57,5 @@ class SocketAddress;
 class SocketPair;
 class SocketService;
 
-template<typename, SocketOpt> class SocketOption;
+template<SocketOpt, typename> class SocketOption;
 }  // namespace Fusion

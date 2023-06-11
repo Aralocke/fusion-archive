@@ -327,7 +327,7 @@ std::vector<std::string> StringUtil::Split(
     }
 
     std::vector<std::string_view> views = SplitViews(in, delim, count);
-    
+
     out.reserve(views.size());
     out.insert(out.begin(), views.begin(), views.end());
 
@@ -368,7 +368,7 @@ std::vector<std::string_view> StringUtil::SplitViews(
     {
         result.push_back(part);
     }
-    
+
     return result;
 }
 
@@ -413,7 +413,7 @@ Result<double> StringUtil::ToFloatingPoint(
     {
         return Failure{ "out of range"sv };
     }
-    if (end - in.data() != in.size())
+    if (size_t(end - in.data()) != in.size())
     {
         return Failure{ "not a number"sv };
     }

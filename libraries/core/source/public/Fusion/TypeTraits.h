@@ -26,10 +26,11 @@
 
 #if FUSION_COMPILER_CLANG
 // --- START - Clang Specific
-#define FUSION_HAS_TRIVIAL_CONSTRUCTOR(T) __has_trivial_constructor(T)
 #define FUSION_IS_POD_TYPE(T) __is_pod(T)
-#define FUSION_IS_TRIVIALLY_CONSTRUCTIBLE(T, ...) __is_trivially_constructible(T, ##__VA_ARGS__)
-#define FUSION_HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#define FUSION_IS_TRIVIALLY_CONSTRUCTIBLE(T,...) std::is_trivially_constructible<T, ##__VA_ARGS__>::value
+#define FUSION_IS_TRIVIALLY_DESTRUCTIBLE(T,...) std::is_trivially_destructible<T, ##__VA_ARGS__>::value
+#define FUSION_HAS_TRIVIAL_CONSTRUCTOR(T) FUSION_IS_TRIVIALLY_CONSTRUCTIBLE(T)
+#define FUSION_HAS_TRIVIAL_DESTRUCTOR(T) FUSION_IS_TRIVIALLY_DESTRUCTIBLE(T)
 #if FUSION_CLANG_VERSION >= 60000
 #define FUSION_IS_TRIVIALLY_DESTRUCTIBLE(T) __is_trivially_destructible(T)
 #endif
@@ -37,11 +38,12 @@
 #elif FUSION_COMPILER_GCC
 // --- START - GCC Specific
 #define FUSION_HAS_TRIVIAL_CONSTRUCTOR(T) __has_trivial_constructor(T)
+#define FUSION_HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
 #define FUSION_IS_POD_TYPE(T) __is_pod(T)
 #if FUSION_GCC_VERSION >= 50100
 #define FUSION_IS_TRIVIALLY_CONSTRUCTIBLE(T, ...) __is_trivially_constructible(T, ##__VA_ARGS__)
 #endif
-#define FUSION_HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#define FUSION_IS_TRIVIALLY_DESTRUCTIBLE(T) __is_trivially_destructible(T)
 // --- START - GCC Specific
 #elif FUSION_COMPILER_MSVC
 // --- START - MSVC Specific
@@ -94,7 +96,7 @@ struct HasTrivialConstructor
 //
 //
 //
-template<class T>
+template<typename T>
 struct HasTrivialDestructor
     : BoolConstant<
         std::is_destructible_v<T>

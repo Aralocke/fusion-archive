@@ -57,7 +57,7 @@ TEST_F(SocketServiceTests, SelectStartupSHutdown)
 
     ASSERT_EQ(events.size(), 1);
     ASSERT_EQ(events[0].sock, two.sock);
-    ASSERT_TRUE(+(events[0].events, SocketOperation::Write));
+    ASSERT_TRUE(+(events[0].events & SocketOperation::Write));
     ProcessWrite(manager, two);
 
     // At this point the service should trigger the read operation on
@@ -70,7 +70,7 @@ TEST_F(SocketServiceTests, SelectStartupSHutdown)
 
     ASSERT_EQ(events.size(), 1);
     ASSERT_EQ(events[0].sock, one.sock);
-    ASSERT_TRUE(+(events[0].events, SocketOperation::Read));
+    ASSERT_TRUE(+(events[0].events & SocketOperation::Read));
     ProcessRead(manager, one);
     {
         std::string data;

@@ -120,33 +120,62 @@ std::string_view ToString(
     return ToString(address, buffer, LENGTH);
 }
 
-template<typename T, SocketOpt opt>
-SocketOption<T, opt>::SocketOption(T* out)
+template<SocketOpt opt, typename T>
+SocketOption<opt, T>::SocketOption(T* out)
     : value(out)
     , size(sizeof(T))
 { }
 
-template<typename T, SocketOpt opt>
-SocketOption<T, opt>::SocketOption(T value)
-    : data(value)
-    , size(sizeof(T))
+template<SocketOpt opt, typename T>
+SocketOption<opt, T>::SocketOption(T value)
+    : size(sizeof(T))
+    , data(value)
 { }
 
-template<typename T, SocketOpt opt>
+template<SocketOpt opt>
 Result<void> Network::GetSocketOption(
     Socket sock,
-    SocketOption<T, opt> option) const
+    SocketOption<opt, bool> option)
 {
-    return Failure(E_NOT_IMPLEMENTED);
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(option);
+
+    return Failure{ E_NOT_IMPLEMENTED };
 }
 
-template<typename T, SocketOpt opt>
-Result<void> Network::SetSocketOption(
+template<SocketOpt opt>
+Result<void> Network::GetSocketOption(
     Socket sock,
-    SocketOption<T, opt> option) const
+    SocketOption<opt, int32_t> option)
 {
-    return Failure(E_NOT_IMPLEMENTED);
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(option);
+
+    return Failure{ E_NOT_IMPLEMENTED };
 }
+
+template<SocketOpt opt>
+Result<void> Network::GetSocketOption(
+    Socket sock,
+    SocketOption<opt, Clock::duration> option)
+{
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(option);
+
+    return Failure{ E_NOT_IMPLEMENTED };
+}
+
+template<SocketOpt opt>
+Result<void> Network::GetSocketOption(
+    Socket sock,
+    SocketOption<opt, MulticastGroup> option)
+{
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(option);
+
+    return Failure{ E_NOT_IMPLEMENTED };
+}
+
 }  // namespace Fusion
 
 template<>

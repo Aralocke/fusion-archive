@@ -38,6 +38,14 @@ target_compile_definitions(Fusion
         -DFUSION_SUPPORTS_CXX14=${FUSION_SUPPORTS_CXX14}
 )
 
+if(UNIX)
+    target_compile_options(Fusion PRIVATE
+        -Wall
+        -Werror
+        -Wfatal-errors
+    )
+endif()
+
 #
 # Configure the library directories that are needed by the project setup
 #
@@ -51,6 +59,7 @@ set(PROJECT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 # Source files
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/*.cpp")
 file(GLOB APPLE_SOURCES "${PROJECT_SOURCE_DIR}/platforms/apple/*.cpp")
+file(GLOB LINUX_SOURCES "${PROJECT_SOURCE_DIR}/platforms/linux/*.cpp")
 file(GLOB POSIX_SOURCES "${PROJECT_SOURCE_DIR}/platforms/posix/*.cpp")
 file(GLOB WIN_SOURCES "${PROJECT_SOURCE_DIR}/platforms/windows/*.cpp")
 # Header Files
@@ -84,7 +93,7 @@ if(MSVC)
     source_group(
         TREE ${PROJECT_SOURCE_DIR}/platforms
         PREFIX "Source Files"
-        FILES ${APPLE_SOURCES} ${POSIX_SOURCES} ${WIN_SOURCES}
+        FILES ${APPLE_SOURCES} ${LINUX_SOURCES} ${POSIX_SOURCES} ${WIN_SOURCES}
     )
     # Set the folder for the library
     set_property(TARGET Fusion PROPERTY FOLDER "Libraries")
@@ -97,7 +106,8 @@ target_sources(Fusion
     PRIVATE
         ${HEADERS} ${FWD_HEADERS} ${IMPL_HEADERS} ${NET_HEADERS}
         ${PRIVATE_HEADERS}
-        ${SOURCES} ${APPLE_SOURCES} ${POSIX_SOURCES} ${WIN_SOURCES}
+        ${SOURCES} ${APPLE_SOURCES} ${LINUX_SOURCES} ${POSIX_SOURCES}
+            ${WIN_SOURCES}
 )
 target_include_directories(Fusion
     PUBLIC

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Fusion/Types.h>
+
  /**
   * Set FUSION_ASSERTIONS_DISABLED to disable all asserts regardless of the
   * NDEBUG definition or FUSION_ASSERTIONS_ENABLED state.

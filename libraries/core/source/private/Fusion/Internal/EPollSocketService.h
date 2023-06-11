@@ -17,7 +17,7 @@
 #pragma once
 
 #include <Fusion/Platform.h>
-#if FUSION_PLATFORM_POSIX
+#if FUSION_PLATFORM_LINUX
 
 #include <Fusion/Internal/Network.h>
 

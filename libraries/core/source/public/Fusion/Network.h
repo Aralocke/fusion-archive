@@ -485,9 +485,9 @@ public:
         , type(type)
     { }
 
-    constexpr SocketConfig operator()(AddressFamily family) const
+    constexpr SocketConfig operator()(AddressFamily f) const
     {
-        return SocketConfig(family, protocol, type);
+        return SocketConfig{ f, protocol, type };
     }
 };
 
@@ -879,7 +879,10 @@ public:
     struct InetAddr
     {
         InetAddress address;
-        uint16_t port = 0;
+        uint16_t port{ 0 };
+
+        InetAddr() = default;
+        InetAddr(InetAddress a, uint16_t p) : address(a), port(p) { }
     };
 
     //
@@ -898,9 +901,12 @@ public:
     struct Inet6Addr
     {
         Inet6Address address;
-        uint16_t port = 0;
-        uint32_t flowInfo = 0;
-        uint32_t scope = 0;
+        uint16_t port{ 0 };
+        uint32_t flowInfo{ 0 };
+        uint32_t scope{ 0 };
+
+        Inet6Addr() = default;
+        Inet6Addr(Inet6Address a, uint16_t p) : address(a), port(p) { }
     };
 
     //
@@ -918,7 +924,7 @@ public:
     //
     struct UnixAddr
     {
-        static const uint8_t LENGTH = 108U;
+        static const uint8_t LENGTH = 104U;
 
         char path[LENGTH + 1] = { 0 };
     };
@@ -988,9 +994,9 @@ public:
         size_t& length) const;
 
 public:
-    bool operator==(const SocketAddress& saddr) const;
-    bool operator!=(const SocketAddress& saddr) const;
-    bool operator<(const SocketAddress& saddr) const;
+    bool operator==(const SocketAddress& address) const;
+    bool operator!=(const SocketAddress& address) const;
+    bool operator<(const SocketAddress& address) const;
 
 private:
     using AddressData = std::variant<
@@ -1035,21 +1041,21 @@ std::ostream& operator<<(
 //
 //
 //
-template<typename T, SocketOpt opt>
+template<SocketOpt opt, typename T>
 class SocketOption final
 {
 public:
     static const SocketOpt option = opt;
 
-    SocketOption(T* ptr);
-    SocketOption(T value);
+    explicit SocketOption(T* ptr);
+    explicit SocketOption(T value);
 
 public:
     T* value{ nullptr };
     size_t size{ 0 };
 
 public:
-    T data;
+    T data{ };
 };
 
 //
@@ -1060,117 +1066,117 @@ namespace SocketOptions
     //
     //
     //
-    using Broadcast = SocketOption<bool, SocketOpt::Broadcast>;
+    using Broadcast = SocketOption<SocketOpt::Broadcast, bool>;
 
     //
     //
     //
-    using Debug = SocketOption<bool, SocketOpt::Debug>;
+    using Debug = SocketOption<SocketOpt::Debug, bool>;
 
     //
     //
     //
-    using DontRoute = SocketOption<bool, SocketOpt::DontRoute>;
+    using DontRoute = SocketOption<SocketOpt::DontRoute, bool>;
 
     //
     //
     //
-    using KeepAlive = SocketOption<bool, SocketOpt::KeepAlive>;
+    using KeepAlive = SocketOption<SocketOpt::KeepAlive, bool>;
 
     //
     //
     //
-    using Linger = SocketOption<Clock::duration, SocketOpt::Linger>;
+    using Linger = SocketOption<SocketOpt::Linger, Clock::duration>;
 
     //
     //
     //
-    using Multicast = SocketOption<MulticastGroup, SocketOpt::Multicast>;
+    using Multicast = SocketOption<SocketOpt::Multicast, MulticastGroup>;
 
     //
     //
     //
-    using MulticastLoopback = SocketOption<bool, SocketOpt::MulticastLoopback>;
+    using MulticastLoopback = SocketOption<SocketOpt::MulticastLoopback, bool>;
 
     //
     //
     //
-    using MulticastTTL = SocketOption<int32_t, SocketOpt::MulticastTTL>;
+    using MulticastTTL = SocketOption<SocketOpt::MulticastTTL, int32_t>;
 
     //
     //
     //
-    using NoDelay = SocketOption<Clock::duration, SocketOpt::NoDelay>;
+    using NoDelay = SocketOption<SocketOpt::NoDelay, Clock::duration>;
 
     //
     //
     //
-    using RecvBuf = SocketOption<int32_t, SocketOpt::RecvBuf>;
+    using RecvBuf = SocketOption<SocketOpt::RecvBuf, int32_t>;
 
     //
     //
     //
-    using RecvLowMark = SocketOption<int32_t, SocketOpt::RecvLowMark>;
+    using RecvLowMark = SocketOption<SocketOpt::RecvLowMark, int32_t>;
 
     //
     //
     //
-    using RecvTimeout = SocketOption<Clock::duration, SocketOpt::RecvTimeout>;
+    using RecvTimeout = SocketOption<SocketOpt::RecvTimeout, Clock::duration>;
 
     //
     //
     //
-    using ReuseAddress = SocketOption<bool, SocketOpt::ReuseAddress>;
+    using ReuseAddress = SocketOption<SocketOpt::ReuseAddress, bool>;
 
     //
     //
     //
-    using ReusePort = SocketOption<bool, SocketOpt::ReusePort>;
+    using ReusePort = SocketOption<SocketOpt::ReusePort, bool>;
 
     //
     //
     //
-    using SendBuf = SocketOption<int32_t, SocketOpt::SendBuf>;
+    using SendBuf = SocketOption<SocketOpt::SendBuf, int32_t>;
 
     //
     //
     //
-    using SendLowMark = SocketOption<int32_t, SocketOpt::SendLowMark>;
+    using SendLowMark = SocketOption<SocketOpt::SendLowMark, int32_t>;
 
     //
     //
     //
-    using SendTimeout = SocketOption<Clock::duration, SocketOpt::SendTimeout>;
+    using SendTimeout = SocketOption<SocketOpt::SendTimeout, Clock::duration>;
 
     //
     //
     //
-    using SocketError = SocketOption<int32_t, SocketOpt::SocketError>;
+    using SocketError = SocketOption<SocketOpt::SocketError, int32_t>;
 
     //
     //
     //
-    using TcpKeepAlive = SocketOption<Clock::duration, SocketOpt::TcpKeepAlive>;
+    using TcpKeepAlive = SocketOption<SocketOpt::TcpKeepAlive, Clock::duration>;
 
     //
     //
     //
-    using TcpKeepCount = SocketOption<int32_t, SocketOpt::TcpKeepCount>;
+    using TcpKeepCount = SocketOption<SocketOpt::TcpKeepCount, int32_t>;
 
     //
     //
     //
-    using TcpKeepIdle = SocketOption<Clock::duration, SocketOpt::TcpKeepIdle>;
+    using TcpKeepIdle = SocketOption<SocketOpt::TcpKeepIdle, Clock::duration>;
 
     //
     //
     //
-    using TcpKeepInterval = SocketOption<Clock::duration, SocketOpt::TcpKeepInterval>;
+    using TcpKeepInterval = SocketOption<SocketOpt::TcpKeepInterval, Clock::duration>;
 
     //
     //
     //
-    using TimeToLive = SocketOption<int32_t, SocketOpt::TimeToLive>;
+    using TimeToLive = SocketOption<SocketOpt::TimeToLive, int32_t>;
 };
 
 //
@@ -1206,8 +1212,8 @@ public:
     //
     struct AcceptedSocketData
     {
-        Socket sock;
-        SocketAddress address;
+        Socket sock{ INVALID_SOCKET };
+        SocketAddress address{ };
     };
 
     //
@@ -1279,13 +1285,25 @@ public:
         void* data,
         size_t size) const = 0;
 
-    //
-    //
-    //
-    template<typename T, SocketOpt opt>
+    template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
-        SocketOption<T, opt> option) const;
+        SocketOption<opt, bool> option);
+
+    template<SocketOpt opt>
+    Result<void> GetSocketOption(
+        Socket sock,
+        SocketOption<opt, int32_t> option);
+
+    template<SocketOpt opt>
+    Result<void> GetSocketOption(
+        Socket sock,
+        SocketOption<opt, Clock::duration> option);
+
+    template<SocketOpt opt>
+    Result<void> GetSocketOption(
+        Socket sock,
+        SocketOption<opt, MulticastGroup> option);
 
     //
     //
@@ -1383,10 +1401,16 @@ public:
     //
     //
     //
-    template<typename T, SocketOpt opt>
+    template<SocketOpt opt, typename T>
     Result<void> SetSocketOption(
         Socket sock,
-        SocketOption<T, opt> option) const;
+        SocketOption<opt, T> option)
+    {
+        FUSION_UNUSED(sock);
+        FUSION_UNUSED(option);
+
+        return Failure{ E_NOT_IMPLEMENTED };
+    }
 
     //
     //
@@ -1432,7 +1456,7 @@ public:
     //
     //
     //
-    SocketPair(Network& net);
+    explicit SocketPair(Network& net);
 
     //
     //

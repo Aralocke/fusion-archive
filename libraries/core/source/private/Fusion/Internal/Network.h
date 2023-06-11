@@ -53,6 +53,9 @@
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
 #endif  // SOCKET_ERROR
+#ifndef MSG_CONFIRM
+#define MSG_CONFIRM 0
+#endif
 #ifndef NO_ERROR
 #define NO_ERROR 0L
 #endif

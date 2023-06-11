@@ -37,7 +37,6 @@ FSN_ADD_COMPILER_FLAGS(CXX
     -Wno-unused-parameter
     -Wno-comment
     -Wall
-    -Werror
 )
 
 FSN_ADD_COMPILER_FLAGS(C
@@ -46,7 +45,6 @@ FSN_ADD_COMPILER_FLAGS(C
     -Wno-unused-parameter
     -Wno-comment
     -Wall
-    -Werror
 )
 
 # Include the specific platform file.

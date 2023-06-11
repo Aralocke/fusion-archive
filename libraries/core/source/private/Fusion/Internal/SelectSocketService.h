@@ -18,6 +18,9 @@
 
 #include <Fusion/Internal/Network.h>
 
+#include <condition_variable>
+#include <mutex>
+
 namespace Fusion::Internal
 {
 //

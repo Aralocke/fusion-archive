@@ -159,6 +159,10 @@ SelectSocketService::Execute(Clock::duration timeout)
         }
     }
 
+    FUSION_UNUSED(rFds);
+    FUSION_UNUSED(wFds);
+    FUSION_UNUSED(eFds);
+
     struct timeval* duration = nullptr;
     struct timeval storage = { 0 };
 
@@ -182,6 +186,9 @@ SelectSocketService::Execute(Clock::duration timeout)
     Clock::time_point start = Clock::now();
     int res = ::select(nFds, &reads, &writes, &errors, duration);
     Clock::time_point end = Clock::now();
+
+    FUSION_UNUSED(start);
+    FUSION_UNUSED(end);
 
     lock.lock();
 

@@ -58,6 +58,8 @@ Failure Internal::GetLastNetworkFailure()
         return E_NET_CONNECTED(err);
     case ETIMEDOUT:
         return E_NET_TIMEOUT(err);
+    default:
+        break;
     }
     return E_FAILURE(err);
 }
@@ -164,7 +166,7 @@ Result<void> Internal::Ioctl::SetOption(
 // -------------------------------------------------------------
 // Poll                                                    START
 Result<size_t> Poll(
-    PollFd& fds,
+    PollFd* fds,
     size_t count,
     Clock::duration timeout)
 {
@@ -172,7 +174,7 @@ Result<size_t> Poll(
     FUSION_UNUSED(count);
     FUSION_UNUSED(timeout);
 
-    return Failure(E_NOT_IMPLEMENTED);
+    return Failure{ E_NOT_IMPLEMENTED };
 }
 // Poll                                                       END
 // --------------------------------------------------------------

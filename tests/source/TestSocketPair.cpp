@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 
-#include <fusion/tests/Tests.h>
+#include <Fusion/Tests/Tests.h>
 
 #include <Fusion/Internal/Network.h>
 
