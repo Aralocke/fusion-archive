@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <Fusion/Concepts/Main.h>
-#include <Fusion/Concepts/ClientCommand.h>
-#include <Fusion/Concepts/ServerCommand.h>
+#include <NetworkTool/Main.h>
+#include <NetworkTool/ClientCommand.h>
+#include <NetworkTool/LookupCommand.h>
+#include <NetworkTool/ServerCommand.h>
 
 #include <Fusion/Argparse.h>
 #include <Fusion/Main.h>
@@ -27,6 +28,7 @@ namespace Fusion
     Result<void> Main(std::span<std::string_view> args)
     {
         using namespace std::string_view_literals;
+        using namespace NetworkTool;
 
         ArgumentParser parser(ArgumentParser::Params{
             .program = Version::Project(),
@@ -43,6 +45,14 @@ namespace Fusion
             });
 
         ClientCommand::Setup(clientCmd, clientOptions);
+
+        LookupCommand::Options lookupOptions;
+        auto& lookupCmd = parser.AddCommand("lookup"sv)
+            .Action([&](const ArgumentCommand&) -> Result<void> {
+                return LookupCommand::Run(std::move(lookupOptions));
+            });
+
+        LookupCommand::Setup(lookupCmd, lookupOptions);
 
         ServerCommand::Options serverOptions;
         auto& serverCmd = parser.AddCommand("client"sv)

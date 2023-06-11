@@ -16,13 +16,14 @@
 
 #pragma once
 
+#include <Fusion/Fwd/Argparse.h>
 #include <Fusion/Result.h>
 
-namespace Fusion
-{
-class ArgumentCommand;
+using namespace Fusion;
 
-class LookupCommand final
+namespace NetworkTool
+{
+class ClientCommand final
 {
 public:
     struct Options
@@ -33,8 +34,8 @@ public:
     static void Setup(ArgumentCommand& cmd, Options& options);
 
 public:
-    LookupCommand(Options options);
-    ~LookupCommand();
+    ClientCommand(Options options);
+    ~ClientCommand();
 
     Result<void> Run();
 

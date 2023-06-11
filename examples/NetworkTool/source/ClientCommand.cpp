@@ -14,12 +14,13 @@
 * limitations under the License.
 **/
 
-#include <Fusion/Concepts/ClientCommand.h>
+#include <NetworkTool/ClientCommand.h>
 
 #include <Fusion/Argparse.h>
+#include <Fusion/Network.h>
 #include <iostream>
 
-namespace Fusion
+namespace NetworkTool
 {
 Result<void> ClientCommand::Run(Options options)
 {
@@ -46,6 +47,8 @@ ClientCommand::~ClientCommand()
 Result<void> ClientCommand::Run()
 {
     std::cout << "ClientCommand\n";
+
+    FUSION_UNUSED(m_options);
 
     return Success;
 }

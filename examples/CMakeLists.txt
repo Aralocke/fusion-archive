@@ -14,4 +14,3 @@
 
 add_subdirectory(NetworkTool)
 add_subdirectory(Playground)
-add_subdirectory(ResolverTool)

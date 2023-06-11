@@ -14,12 +14,13 @@
 * limitations under the License.
 **/
 
-#include <Fusion/Concepts/ServerCommand.h>
+#include <NetworkTool/ServerCommand.h>
 
 #include <Fusion/Argparse.h>
+#include <Fusion/Network.h>
 #include <iostream>
 
-namespace Fusion
+namespace NetworkTool
 {
 Result<void> ServerCommand::Run(Options options)
 {
@@ -46,6 +47,8 @@ ServerCommand::~ServerCommand()
 Result<void> ServerCommand::Run()
 {
     std::cout << "ServerCommand\n";
+
+    FUSION_UNUSED(m_options);
 
     return Success;
 }
