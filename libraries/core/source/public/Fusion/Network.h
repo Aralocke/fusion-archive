@@ -24,9 +24,11 @@
 
 #include <array>
 #include <iosfwd>
+#include <functional>
 #include <span>
 #include <string_view>
 #include <variant>
+
 namespace Fusion
 {
 //
@@ -1190,6 +1192,7 @@ struct AddressInfo
     SocketProtocol protocol{ SocketProtocol::None };
     SocketAddress address;
 };
+
 //
 //
 //
@@ -1285,21 +1288,33 @@ public:
         void* data,
         size_t size) const = 0;
 
+    //
+    //
+    //
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
         SocketOption<opt, bool> option);
 
+    //
+    //
+    //
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
         SocketOption<opt, int32_t> option);
 
+    //
+    //
+    //
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
         SocketOption<opt, Clock::duration> option);
 
+    //
+    //
+    //
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
@@ -1401,17 +1416,43 @@ public:
     //
     //
     //
-    template<SocketOpt opt, typename T>
+    template<SocketOpt opt>
     Result<void> SetSocketOption(
         Socket sock,
-        SocketOption<opt, T> option)
-    {
-        FUSION_UNUSED(sock);
-        FUSION_UNUSED(option);
+        SocketOption<opt, bool> option);
 
-        return Failure{ E_NOT_IMPLEMENTED };
-    }
+    //
+    //
+    //
+    template<SocketOpt opt>
+    Result<void> SetSocketOption(
+        Socket sock,
+        SocketOption<opt, int32_t> option);
 
+    //
+    //
+    //
+    template<SocketOpt opt>
+    Result<void> SetSocketOption(
+        Socket sock,
+        SocketOption<opt, Clock::duration> option);
+
+    //
+    //
+    //
+    template<SocketOpt opt>
+    Result<void> SetSocketOption(
+        Socket sock,
+        SocketOption<opt, MulticastGroup> option);
+
+    //
+    //
+    //
+    virtual Result<void> Shutdown(
+        Socket sock,
+        SocketShutdownMode mode) const = 0;
+
+public:
     //
     //
     //
@@ -1425,9 +1466,7 @@ public:
     //
     //
     //
-    virtual Result<void> Shutdown(
-        Socket sock,
-        SocketShutdownMode mode) const = 0;
+    virtual void Stop(std::function<void(Failure&)> fn) = 0;
 };
 
 //
@@ -1482,6 +1521,11 @@ public:
     //
     //
     void Stop();
+
+    //
+    //
+    //
+    void Stop(std::function<void(Failure&)> fn);
 
     //
     //
@@ -1615,7 +1659,7 @@ public:
     //
     //
     //
-    virtual void Stop(std::function<void(void)> fn) = 0;
+    virtual void Stop(std::function<void(Failure&)> fn) = 0;
 
 protected:
     SocketService() = default;

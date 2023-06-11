@@ -137,10 +137,25 @@ Result<void> Network::GetSocketOption(
     Socket sock,
     SocketOption<opt, bool> option)
 {
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
 
-    return Failure{ E_NOT_IMPLEMENTED };
+    int32_t value{ 0 };
+    if (auto result = GetSocketOption(
+        sock,
+        option.option,
+        &value,
+        sizeof(value)); !result)
+    {
+        return result.Error();
+    }
+
+    *option.value = bool(value != 0);
+    option.size = sizeof(bool);
+
+    return Success;
 }
 
 template<SocketOpt opt>
@@ -148,10 +163,21 @@ Result<void> Network::GetSocketOption(
     Socket sock,
     SocketOption<opt, int32_t> option)
 {
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
 
-    return Failure{ E_NOT_IMPLEMENTED };
+    if (auto result = GetSocketOption(
+        sock,
+        option.option,
+        option.value,
+        option.size); !result)
+    {
+        return result.Error();
+    }
+
+    return Success;
 }
 
 template<SocketOpt opt>
@@ -167,6 +193,73 @@ Result<void> Network::GetSocketOption(
 
 template<SocketOpt opt>
 Result<void> Network::GetSocketOption(
+    Socket sock,
+    SocketOption<opt, MulticastGroup> option)
+{
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(option);
+
+    return Failure{ E_NOT_IMPLEMENTED };
+}
+
+template<SocketOpt opt>
+Result<void> Network::SetSocketOption(
+    Socket sock,
+    SocketOption<opt, bool> option)
+{
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
+
+    int32_t value{ option.data };
+    if (auto result = SetSocketOption(
+        sock,
+        option.option,
+        &value,
+        sizeof(value)); !result)
+    {
+        return result.Error();
+    }
+
+    return Success;
+}
+
+template<SocketOpt opt>
+Result<void> Network::SetSocketOption(
+    Socket sock,
+    SocketOption<opt, int32_t> option)
+{
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
+
+    if (auto result = SetSocketOption(
+        sock,
+        option.option,
+        &option.data,
+        option.size); !result)
+    {
+        return result.Error();
+    }
+
+    return Success;
+}
+
+template<SocketOpt opt>
+Result<void> Network::SetSocketOption(
+    Socket sock,
+    SocketOption<opt, Clock::duration> option)
+{
+    FUSION_UNUSED(sock);
+    FUSION_UNUSED(option);
+
+    return Failure{ E_NOT_IMPLEMENTED };
+}
+
+template<SocketOpt opt>
+Result<void> Network::SetSocketOption(
     Socket sock,
     SocketOption<opt, MulticastGroup> option)
 {

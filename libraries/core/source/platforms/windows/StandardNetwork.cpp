@@ -25,10 +25,6 @@
 
 namespace Fusion::Internal
 {
-StandardNetwork::StandardNetwork() = default;
-
-StandardNetwork::~StandardNetwork() = default;
-
 Result<Network::AcceptedSocketData>
 StandardNetwork::Accept(Socket server) const
 {
@@ -214,8 +210,29 @@ Result<void> StandardNetwork::GetSocketOption(
     void* output,
     size_t size) const
 {
-    return Failure{ E_NOT_IMPLEMENTED };
-    // return GetSocketOption(sock, option, output, size);
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
+
+    int length = static_cast<int>(size);
+    int res = ::getsockopt(
+        static_cast<SOCKET>(sock),
+        GetSocketOptLevel(option),
+        GetSocketOpt(option),
+        reinterpret_cast<char*>(output),
+        &length);
+
+    if (res == SOCKET_ERROR)
+    {
+        return GetLastNetworkFailure()
+            .WithContext("failed to get socket option '{}' for '{}'",
+                option,
+                sock);
+    }
+
+    size = static_cast<size_t>(length);
+    return Success;
 }
 
 Result<void> StandardNetwork::Listen(
@@ -419,20 +436,31 @@ Result<void> StandardNetwork::SetBlocking(
 Result<void> StandardNetwork::SetSocketOption(
     Socket sock,
     SocketOpt option,
-    const void* input,
+    const void* data,
     size_t size) const
 {
-    return Failure{ E_NOT_IMPLEMENTED };
-    // return SetSocketOption(sock, option, input, size);
-}
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
 
-Result<void> StandardNetwork::Start()
-{
+    int res = ::setsockopt(
+        static_cast<SOCKET>(sock),
+        GetSocketOptLevel(option),
+        GetSocketOpt(option),
+        reinterpret_cast<const char*>(data),
+        static_cast<int>(size));
+
+    if (res == SOCKET_ERROR)
+    {
+        return GetLastNetworkFailure()
+            .WithContext("failed to get socket option '{}' for '{}'",
+                option,
+                sock);
+    }
+
     return Success;
 }
-
-void StandardNetwork::Stop()
-{}
 
 Result<void> StandardNetwork::Shutdown(
     Socket sock,

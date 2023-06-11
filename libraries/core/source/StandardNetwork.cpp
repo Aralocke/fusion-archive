@@ -13,3 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
+#include <Fusion/Internal/StandardNetwork.h>
+
+namespace Fusion::Internal
+{
+StandardNetwork::StandardNetwork() = default;
+
+StandardNetwork::~StandardNetwork() = default;
+
+Result<void> StandardNetwork::Start()
+{
+    return Success;
+}
+
+void StandardNetwork::Stop()
+{
+    Stop(nullptr);
+}
+
+void StandardNetwork::Stop(std::function<void(Failure&)> fn)
+{
+    if (fn)
+    {
+        Failure f(E_SUCCESS);
+
+        fn(f);
+    }
+}
+}

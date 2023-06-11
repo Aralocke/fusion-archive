@@ -23,10 +23,6 @@
 
 namespace Fusion::Internal
 {
-StandardNetwork::StandardNetwork() = default;
-
-StandardNetwork::~StandardNetwork() = default;
-
 Result<Network::AcceptedSocketData>
 StandardNetwork::Accept(Socket server) const
 {
@@ -220,13 +216,30 @@ Result<void> StandardNetwork::GetSocketOption(
     void* output,
     size_t size) const
 {
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
-    FUSION_UNUSED(output);
-    FUSION_UNUSED(size);
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
 
-    return Failure{ E_NOT_IMPLEMENTED };
-    // return GetSocketOption(sock, option, output, size);
+    socklen_t length = static_cast<socklen_t>(size);
+
+    int res = ::getsockopt(
+        sock,
+        GetSocketOptLevel(option),
+        GetSocketOpt(option),
+        reinterpret_cast<char*>(output),
+        &length);
+
+    if (res == SOCKET_ERROR)
+    {
+        return GetLastNetworkFailure()
+            .WithContext("failed to get socket option '{}' for '{}'",
+                option,
+                sock);
+    }
+
+    size = static_cast<size_t>(length);
+    return Success;
 }
 
 Result<void> StandardNetwork::Listen(
@@ -452,25 +465,31 @@ Result<void> StandardNetwork::SetBlocking(
 Result<void> StandardNetwork::SetSocketOption(
     Socket sock,
     SocketOpt option,
-    const void* input,
+    const void* data,
     size_t size) const
 {
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
-    FUSION_UNUSED(input);
-    FUSION_UNUSED(size);
+    if (sock == INVALID_SOCKET)
+    {
+        return Failure(E_INVALID_ARGUMENT);
+    }
 
-    return Failure{ E_NOT_IMPLEMENTED };
-    // return SetSocketOption(sock, option, input, size);
-}
+    int res = ::setsockopt(
+        sock,
+        GetSocketOptLevel(option),
+        GetSocketOpt(option),
+        reinterpret_cast<const char*>(data),
+        static_cast<socklen_t>(size));
 
-Result<void> StandardNetwork::Start()
-{
+    if (res == SOCKET_ERROR)
+    {
+        return GetLastNetworkFailure()
+            .WithContext("failed to get socket option '{}' for '{}'",
+                option,
+                sock);
+    }
+
     return Success;
 }
-
-void StandardNetwork::Stop()
-{}
 
 Result<void> StandardNetwork::Shutdown(
     Socket sock,

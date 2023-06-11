@@ -534,10 +534,14 @@ int32_t Internal::GetSocketOpt(SocketOpt option)
         int32_t(SO_SNDLOWAT),        // SendLowMark
         int32_t(SO_SNDTIMEO),        // SendTimeout
         int32_t(SO_ERROR),           // SocketError
+#if FUSION_PLATFORM_DARWIN
         int32_t(TCP_KEEPALIVE),      // TcpKeepAlive
+#else
+        int32_t(-1),                 // TcpKeepAlive
+#endif
         int32_t(TCP_KEEPCNT),        // TcpKeepCount
 #if FUSION_PLATFORM_WINDOWS
-        int32_t(TCP_KEEPIDLE),            // TcpKeepIdle
+        int32_t(TCP_KEEPIDLE),       // TcpKeepIdle
 #else
         int32_t(-1),                 // TcpKeepIdle
 #endif
@@ -1542,6 +1546,7 @@ void Internal::MapAddressInfo(
     info.ai_next = nullptr;
 }
 // AddressInfo                                               END
+// -------------------------------------------------------------
 // Network                                                 START
 Result<std::unique_ptr<Network>> Network::Create()
 {

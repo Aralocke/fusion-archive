@@ -148,19 +148,25 @@ public:
     //
     //
     //
+    Result<void> Shutdown(
+        Socket sock,
+        SocketShutdownMode mode) const override;
+
+public:
+    //
+    //
+    //
     Result<void> Start() override;
 
     //
     //
     //
-    Result<void> Shutdown(
-        Socket sock,
-        SocketShutdownMode mode) const override;
+    void Stop() override;
 
     //
     //
     //
-    void Stop() override;
+    void Stop(std::function<void(Failure&)> fn) override;
 };
 
 }  // namespace fusion
