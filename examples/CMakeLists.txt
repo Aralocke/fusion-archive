@@ -13,5 +13,5 @@
 # limitations under the License.
 
 add_subdirectory(NetworkTool)
-add_subdirectory(playground)
+add_subdirectory(Playground)
 add_subdirectory(ResolverTool)
