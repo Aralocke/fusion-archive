@@ -24,6 +24,15 @@ function(FSN_VERSION_FILE TARGET BUILD_ROOT)
     # paths.
     set(BUILD_ROOT "${BUILD_ROOT}/${TARGET}")
 
+    # Push the definitions for the Platform, Architecture, and Config to the
+    # given target.
+    target_compile_definitions(${TARGET}
+        PUBLIC
+            FUSION_BUILD_PLATFORM=${FUSION_BUILD_PLATFORM}
+            FUSION_BUILD_ARCH=${FUSION_BUILD_ARCH}
+            FUSION_BUILD_CONFIG=$<CONFIG>
+    )
+
     # Set the paths that get exported to the target
     # These are used to configure the executable for the generated files
     # and their include/source paths.

@@ -14,13 +14,29 @@
 
 #include <Fusion/Generated/Version.h>
 
+#include <Fusion/Macros.h>
+
 namespace Fusion
 {
 using namespace std::string_view_literals;
 
+std::string_view Version::Architecture()
+{
+    constexpr static std::string_view buildArch{ FUSION_STRINGIZE(FUSION_BUILD_ARCH) };
+
+    return buildArch;
+}
+
 std::string_view Version::Branch()
 {
     return "@GIT_BRANCH@"sv;
+}
+
+std::string_view Version::Config()
+{
+    constexpr static std::string_view buildConfig{ FUSION_STRINGIZE(FUSION_BUILD_CONFIG) };
+
+    return buildConfig;
 }
 
 std::string_view Version::Commit()
@@ -46,6 +62,13 @@ uint32_t Version::Minor()
 uint32_t Version::Patch()
 {
     return @PROJECT_VERSION_PATCH@;
+}
+
+std::string_view Version::Platform()
+{
+    constexpr static std::string_view buildPlatform{ FUSION_STRINGIZE(FUSION_BUILD_PLATFORM) };
+
+    return buildPlatform;
 }
 
 std::string_view Version::Project()
