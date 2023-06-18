@@ -60,6 +60,7 @@ endif()
 # At this point everything included assumes that the Fusion library is being built
 # as a main project and it should include everything to configure itself.
 include(Common/Asan)
+include(Common/Tsan)
 include(Common/Ubsan)
 include(Common/Versioning)
 
@@ -68,6 +69,9 @@ list(APPEND FUSION_RELEASE_CONFIGS RELEASE MINSIZEREL)
 
 if(FUSION_SUPPORTS_ASAN)
     list(APPEND FUSION_DEBUG_CONFIGS ASAN)
+endif()
+if(FUSION_SUPPORTS_TSAN)
+    list(APPEND FUSION_DEBUG_CONFIGS TSAN)
 endif()
 if(FUSION_SUPPORTS_UBSAN)
     list(APPEND FUSION_DEBUG_CONFIGS UBSAN)

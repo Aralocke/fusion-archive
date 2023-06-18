@@ -349,6 +349,14 @@ static_assert(_NATIVE_WCHAR_T_DEFINED, "wchar_t support required");
 #define FUSION_NODISCARD
 #endif
 
+#if FUSION_THREAD_SANITIZER_ENABLED
+#if FUSION_COMPILER_CLANG
+#define FUSION_THREAD_ATTRIBUTE(attr) __attribute__((attr))
+#else
+#define FUSION_THREAD_ATTRIBUTE(attr)
+#endif
+#endif
+
 namespace Fusion
 {
 //
