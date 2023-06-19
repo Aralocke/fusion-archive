@@ -200,3 +200,23 @@ else()
         $<INSTALL_INTERFACE:zstd/lib>  # <prefix>/include/mylib
     )
 endif()
+
+################################
+# Libcurl
+# Depends boringssl, c-ares, zlib, zstd
+################################
+
+FUSION_INIT_GIT_SUBMODULE(curl/src)
+
+add_subdirectory(curl EXCLUDE_FROM_ALL)
+set_property(TARGET libcurl_static PROPERTY FOLDER "External")
+
+if(FUSION_MASTER_PROJECT)
+    set_target_output(libcurl_static "${FUSION_BUILD_ROOT}/external")
+    if(CURL_BUILD_TOOL)
+        set_target_output(libcurl_static "${FUSION_BUILD_ROOT}/external")
+    endif()
+endif()
+if(CURL_BUILD_TOOL)
+    set_property(TARGET libcurl_static PROPERTY FOLDER "External")
+endif()
