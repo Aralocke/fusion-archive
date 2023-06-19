@@ -1,0 +1,5 @@
+/apple*
+/linux*
+/win*
+/*.h
+/*.c{c,cpp}

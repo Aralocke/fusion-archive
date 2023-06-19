@@ -30,6 +30,47 @@ function(FUSION_INIT_GIT_SUBMODULE DIRECTORY)
 endfunction()
 
 ################################
+# BoringSSL
+################################
+
+FUSION_INIT_GIT_SUBMODULE(boringssl/src)
+
+set(BUILD_BORINGSSL_TOOL OFF CACHE INTERNAL "")
+
+if(WIN32)
+    # Visual Studio projects currently do not support building ASM files so
+    # we have to disable them. Yes this is a performance hit, but apparently
+    # works fine on Linux/OSX.
+    #
+    # Known Limitations on Windows
+    # https://boringssl.googlesource.com/boringssl/+/HEAD/BUILDING.md
+    add_definitions(-DOPENSSL_NO_ASM=1)
+endif()
+
+add_subdirectory(boringssl EXCLUDE_FROM_ALL)
+
+if(BUILD_BORINGSSL_TOOL)
+    set_property(TARGET bssl PROPERTY FOLDER "External")
+endif()
+set_property(TARGET crypto PROPERTY FOLDER "External")
+set_property(TARGET ssl PROPERTY FOLDER "External")
+
+if(WIN32)
+    target_compile_options(crypto PRIVATE /wd4100 /wd4244 /wd4267 /wd4706)
+    target_compile_options(ssl PRIVATE /wd4100 /wd4244 /wd4267 /wd4706)
+endif()
+
+target_include_directories(ssl PUBLIC boringssl/src/include)
+
+if(FUSION_MASTER_PROJECT)
+    if(BUILD_BORINGSSL_TOOL)
+        FSN_SET_TARGET_OUTPUT(bssl "${FUSION_BUILD_ROOT}/external")
+    endif()
+    FSN_SET_TARGET_OUTPUT(crypto "${FUSION_BUILD_ROOT}/external")
+    FSN_SET_TARGET_OUTPUT(ssl "${FUSION_BUILD_ROOT}/external")
+endif()
+
+################################
 # C-Ares
 ################################
 

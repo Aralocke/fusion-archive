@@ -15,6 +15,7 @@
 .DEFAULT_TARGET := all
 
 CMAKE := $(shell command -v cmake 2>/dev/null)
+PODMAN := $(shell command -v podman 2>/dev/null)
 TOOLCHAIN := clang
 
 ifeq ($(OS),Windows_NT)
@@ -58,7 +59,7 @@ debug: $(OS_NAME)-build-debug
 public: $(OS_NAME)-build-public
 
 builder:
-	docker build -t fusion-builder:latest -f Build/Dockerfile .
+	$(PODMAN) build -t fusion-builder:latest -f Build/Dockerfile .
 
 proj: $(OS_NAME)-proj
 
@@ -79,6 +80,18 @@ check-toolchain:
 		exit 1; \
 	fi
 
+# Utility Support
+boringssl-update:
+	@if [ ! -d external/libraries/boringssl/src ]; then \
+		@echo >&2 "BoringSSL submodule not initialized"; \
+		exit 1; \
+	fi
+	@echo "Building BoringSSL toolchain container"
+	cd external/libraries/boringssl && \
+		$(PODMAN) build -t boringssl-builder:latest -f Dockerfile .
+	@echo "Running BoringSSL toolchain update"
+	cd external/libraries/boringssl && \
+		./generate_files.sh
 #
 # Linux specific build targets
 #

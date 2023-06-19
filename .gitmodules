@@ -7,3 +7,6 @@
 [submodule "external/libraries/c-ares"]
 	path = external/libraries/c-ares
 	url = https://github.com/c-ares/c-ares.git
+[submodule "external/libraries/boringssl/src"]
+	path = external/libraries/boringssl/src
+	url = https://github.com/google/boringssl.git
