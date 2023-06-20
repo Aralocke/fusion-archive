@@ -134,6 +134,31 @@ if(FUSION_MAIN_PROJECT)
 endif()
 
 ################################
+# ZLib (Next Generation)
+################################
+
+FUSION_INIT_GIT_SUBMODULE(zlib)
+
+set(ZLIB_COMPAT ON CACHE INTERNAL "")
+set(ZLIB_ENABLE_TESTS OFF CACHE INTERNAL "")
+set(ZLIBNG_ENABLE_TESTS OFF CACHE INTERNAL "")
+set(WITH_GTEST OFF CACHE INTERNAL "")
+
+if(NOT MSVC)
+    set(WITH_NATIVE_INSTRUCTIONS ON CACHE INTERNAL "")
+endif()
+
+add_subdirectory(zlib EXCLUDE_FROM_ALL)
+
+set_property(TARGET zlib PROPERTY FOLDER "External")
+set_property(TARGET zlibstatic PROPERTY FOLDER "External")
+
+if(FUSION_MAIN_PROJECT)
+    FSN_SET_TARGET_OUTPUT(zlib "${FUSION_BUILD_ROOT}/external")
+    FSN_SET_TARGET_OUTPUT(zlibstatic "${FUSION_BUILD_ROOT}/external")
+endif()
+
+################################
 # ZStandard
 ################################
 
