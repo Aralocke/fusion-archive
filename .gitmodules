@@ -10,3 +10,6 @@
 [submodule "external/libraries/boringssl/src"]
 	path = external/libraries/boringssl/src
 	url = https://github.com/google/boringssl.git
+[submodule "external/libraries/zstd"]
+	path = external/libraries/zstd
+	url = https://github.com/facebook/zstd.git

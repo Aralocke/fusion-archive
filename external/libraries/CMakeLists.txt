@@ -132,3 +132,46 @@ set_property(TARGET fmt PROPERTY FOLDER "External")
 if(FUSION_MAIN_PROJECT)
     FSN_SET_TARGET_OUTPUT(fmt "${FUSION_BUILD_ROOT}/external")
 endif()
+
+################################
+# ZStandard
+################################
+
+FUSION_INIT_GIT_SUBMODULE(zstd)
+
+set(ZSTD_BUILD_TESTS OFF CACHE INTERNAL "")
+set(ZSTD_BUILD_PROGRAMS OFF CACHE INTERNAL "")
+set(ZSTD_BUILD_CONTRIB OFF CACHE INTERNAL "")
+set(ZSTD_LEGACY_SUPPORT OFF CACHE INTERNAL "")
+
+if(BUILD_SHARED_LIBS)
+    set(ZSTD_BUILD_SHARED ON CACHE INTERNAL "")
+    set(ZSTD_BUILD_STATIC OFF CACHE INTERNAL "")
+else()
+    set(ZSTD_BUILD_SHARED OFF CACHE INTERNAL "")
+    set(ZSTD_BUILD_STATIC ON CACHE INTERNAL "")
+endif()
+
+add_subdirectory(zstd/build/cmake EXCLUDE_FROM_ALL)
+
+if(BUILD_SHARED_LIBS)
+    add_library(libzstd ALIAS libzstd_shared)
+    set_property(TARGET libzstd_shared PROPERTY FOLDER "External")
+    if(FUSION_MAIN_PROJECT)
+        FSN_SET_TARGET_OUTPUT(libzstd_shared "${FUSION_BUILD_ROOT}/external")
+    endif()
+    target_include_directories(libzstd_shared PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zstd/lib>
+        $<INSTALL_INTERFACE:zstd/lib>  # <prefix>/include/mylib
+    )
+else()
+    add_library(libzstd ALIAS libzstd_static)
+    set_property(TARGET libzstd_static PROPERTY FOLDER "External")
+    if(FUSION_MAIN_PROJECT)
+        FSN_SET_TARGET_OUTPUT(libzstd_static "${FUSION_BUILD_ROOT}/external")
+    endif()
+    target_include_directories(libzstd_static PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zstd/lib>
+        $<INSTALL_INTERFACE:zstd/lib>  # <prefix>/include/mylib
+    )
+endif()

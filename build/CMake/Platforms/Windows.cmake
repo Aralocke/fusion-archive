@@ -34,6 +34,15 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<OR:$<CONFIG:Debug>,$<CONFIG:Asa
 FSN_ADD_COMPILER_FLAGS(DEBUG CXX /Z7 /FC)
 FSN_ADD_COMPILER_FLAGS(DEBUG C /Z7 /FC)
 
+# Disable some Windows compilation warnings by default
+if(MSVC)
+    set(MSVC_DISABLE_WARNINGS
+        /wd4005  # Disables warning for macros that are defined multiple times
+    )
+    FSN_ADD_COMPILER_FLAGS(CXX ${MSVC_DISABLE_WARNINGS})
+    FSN_ADD_COMPILER_FLAGS(C ${MSVC_DISABLE_WARNINGS})
+endif()
+
 # Set global compiler flags. These will affect all configurations
 # /MP - Enable multi-processor builds
 # /GS - enable buffer overflow checking
