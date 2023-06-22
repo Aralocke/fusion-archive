@@ -38,7 +38,7 @@ else
     ifeq ($(UNAME_S),Darwin)
         OS_NAME = osx
     endif
-    UNAME_P := $(shell uname -p)
+    UNAME_P := $(shell uname -m)
     ifeq ($(UNAME_P),x86_64)
         ARCH = X64
     endif
