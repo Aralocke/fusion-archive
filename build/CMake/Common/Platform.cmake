@@ -18,6 +18,10 @@ endif()
 
 include(CheckCCompilerFlag)
 
+if(NOT DEFINED CMAKE_DEBUG_POSTFIX)
+    set(CMAKE_DEBUG_POSTFIX "-d")
+endif()
+
 if(WIN32)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(FUSION_BUILD_ARCH "X64")

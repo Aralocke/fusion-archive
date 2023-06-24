@@ -12,15 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+function(FUSION_INIT_GIT_SUBMODULE DIRECTORY)
+    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY}/.git)
+        find_package(Git QUIET REQUIRED)
+        message(STATUS "${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY}/.git does not exist. Initializing ${DIRECTORY} submodule ...")
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} submodule update --init ${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            RESULT_VARIABLE GIT_EXIT_CODE
+        )
+        if(NOT GIT_EXIT_CODE EQUAL "0")
+            message(FATAL_ERROR "${GIT_EXECUTABLE} submodule update --init ${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY} failed with exit code ${GIT_EXIT_CODE}, please checkout submodules")
+        endif()
+    else()
+        message(STATUS "Git submodule '${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY}' is initialized")
+    endif()
+endfunction()
+
 ################################
 # GoogleTest
 ################################
+
+FUSION_INIT_GIT_SUBMODULE(googletest)
 
 set(BUILD_GMOCK OFF CACHE INTERNAL "")
 set(INSTALL_GTEST OFF CACHE INTERNAL "")
 set(gtest_build_samples OFF CACHE INTERNAL "")
 
-add_subdirectory(googletest)
+add_subdirectory(googletest EXCLUDE_FROM_ALL)
 
 # GoogleTest comes with 4 solutions and we want to group
 # them into their own folder.
@@ -36,11 +55,13 @@ endif()
 # Fmtlib
 ################################
 
+FUSION_INIT_GIT_SUBMODULE(fmtlib)
+
 set(FMT_DOC OFF CACHE INTERNAL "")
 set(FMT_INSTALL OFF CACHE INTERNAL "")
 set(FMT_TEST OFF CACHE INTERNAL "")
 
-add_subdirectory(fmtlib)
+add_subdirectory(fmtlib EXCLUDE_FROM_ALL)
 
 # Ensure that the fmt target ends up in the correct folder in the solution.
 set_property(TARGET fmt PROPERTY FOLDER "External")

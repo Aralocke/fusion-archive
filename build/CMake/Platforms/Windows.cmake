@@ -47,5 +47,6 @@ FSN_ADD_LINKER_FLAGS(/DEBUG /LARGEADDRESSAWARE)
 # Global Definitions that effect every project built.
 add_definitions(-D_CRT_SECURE_NO_WARNINGS=1)
 add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
-add_definitions(-DUNICODE -D_UNICODE)
-add_definitions(-DWIN32_LEAN_AND_MEAN)
+add_definitions(-DUNICODE=1 -D_UNICODE=1)
+add_definitions(-DWIN32_LEAN_AND_MEAN=1)
+add_definitions(-DNOMINMAX=1)
