@@ -134,6 +134,26 @@ if(FUSION_MAIN_PROJECT)
 endif()
 
 ################################
+# simdjson
+################################
+
+FUSION_INIT_GIT_SUBMODULE(simdjson)
+
+add_subdirectory(simdjson EXCLUDE_FROM_ALL)
+
+# Ensure that the fmt target ends up in the correct folder in the solution.
+set_property(TARGET simdjson PROPERTY FOLDER "External")
+
+target_compile_definitions(simdjson
+    PUBLIC
+        -DSIMDJSON_SANITIZE=$<IF:$<CONFIG:Asan>,ON,OFF>
+)
+
+if(FUSION_MAIN_PROJECT)
+    FSN_SET_TARGET_OUTPUT(simdjson "${FUSION_BUILD_ROOT}/external")
+endif()
+
+################################
 # ZLib (Next Generation)
 ################################
 

@@ -140,8 +140,9 @@ if(WIN32)
 endif()
 
 list(APPEND fusion_link_targets
-    libcurl # curl
-    fmt     # fmtlib for logging
+    libcurl   # curl
+    fmt       # fmtlib for logging
+    simdjson  # json parsing support
 )
 
 target_link_libraries(Fusion PUBLIC ${fusion_link_targets})
