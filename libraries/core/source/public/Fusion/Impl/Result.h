@@ -186,3 +186,15 @@ typename Result<T, E>::ValueType Result<T, E>::ValueOr(U&& value) const
 }
 
 }  // namespace Fusion
+
+template<typename T>
+struct fmt::formatter<Fusion::Result<T>> : fmt::formatter<Fusion::Failure>
+{
+    template <typename FormatContext>
+    auto format(
+        const Fusion::Result<T>& result,
+        FormatContext& ctx) -> decltype(ctx.out())
+    {
+        return formatter<Fusion::Failure>::format(result.Error(), ctx);
+    }
+};
