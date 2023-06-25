@@ -250,13 +250,58 @@ linux-cmake-ubsan: check-toolchain
 #
 # OSX Build Targets
 #
-osx-build-all: linux-build-debug
+osx-build: osx-build-debug osx-build-public osx-build-asan osx-build-ubsan osx-build-tsan
+
+osx-build-all: osx-build-debug osx-build-release osx-build-releasedbg \
+	osx-build-public osx-build-asan osx-build-ubsan osx-build-tsan
 
 osx-build-debug: osx-cmake-debug
 	cd tmp/OSX/$(ARCH)-Debug-$(TOOLCHAIN) && \
 		$(CMAKE) \
 			--build . \
 			--config DEBUG \
+			--parallel $(NPROC)
+
+osx-build-release: osx-cmake-release
+	cd tmp/OSX/$(ARCH)-Release-$(TOOLCHAIN) && \
+		$(CMAKE) \
+			--build . \
+			--config RELEASE \
+			--parallel $(NPROC)
+
+osx-build-releasedbg: osx-cmake-releasedbg
+	cd tmp/OSX/$(ARCH)-ReleaseDbg-$(TOOLCHAIN) && \
+		$(CMAKE) \
+			--build . \
+			--config RELWITHDBGINFO \
+			--parallel $(NPROC)
+
+osx-build-public: osx-cmake-public
+	cd tmp/OSX/$(ARCH)-Public-$(TOOLCHAIN) && \
+		$(CMAKE) \
+			--build . \
+			--config DEBUG \
+			--parallel $(NPROC)
+
+osx-build-asan: osx-cmake-asan
+	cd tmp/OSX/$(ARCH)-Asan-$(TOOLCHAIN) && \
+		$(CMAKE) \
+			--build . \
+			--config ASAN \
+			--parallel $(NPROC)
+
+osx-build-tsan: osx-cmake-tsan
+	cd tmp/OSX/$(ARCH)-Tsan-$(TOOLCHAIN) && \
+		$(CMAKE) \
+			--build . \
+			--config TSAN \
+			--parallel $(NPROC)
+
+osx-build-ubsan: osx-cmake-ubsan
+	cd tmp/OSX/$(ARCH)-Ubsan-$(TOOLCHAIN) && \
+		$(CMAKE) \
+			--build . \
+			--config UBSAN \
 			--parallel $(NPROC)
 
 osx-cmake-debug: check-toolchain
@@ -267,7 +312,67 @@ osx-cmake-debug: check-toolchain
 			-DCMAKE_BUILD_TYPE:STRING=Debug \
 			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
 			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
-			../../../
+			-S $(PWD)
+
+osx-cmake-release: check-toolchain
+	@mkdir -p tmp/OSX/$(ARCH)-Release-$(TOOLCHAIN)
+	cd tmp/OSX/$(ARCH)-Release-$(TOOLCHAIN) && \
+		$(CMAKE) -G "Unix Makefiles" \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
+			-DCMAKE_BUILD_TYPE:STRING=Release \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
+			-S $(PWD)
+
+osx-cmake-releasedbg: check-toolchain
+	@mkdir -p tmp/OSX/$(ARCH)-ReleaseDbg-$(TOOLCHAIN)
+	cd tmp/OSX/$(ARCH)-ReleaseDbg-$(TOOLCHAIN) && \
+		$(CMAKE) -G "Unix Makefiles" \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
+			-DCMAKE_BUILD_TYPE:STRING=RELWITHDEBINFO \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
+			-S $(PWD)
+
+osx-cmake-public: check-toolchain
+	@mkdir -p tmp/OSX/$(ARCH)-Public-$(TOOLCHAIN)
+	cd tmp/OSX/$(ARCH)-Public-$(TOOLCHAIN) && \
+		$(CMAKE) -G "Unix Makefiles" \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
+			-DCMAKE_BUILD_TYPE:STRING=Public \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
+			-S $(PWD)
+
+osx-cmake-asan: check-toolchain
+	@mkdir -p tmp/OSX/$(ARCH)-Asan-$(TOOLCHAIN)
+	cd tmp/OSX/$(ARCH)-Asan-$(TOOLCHAIN) && \
+		$(CMAKE) -G "Unix Makefiles" \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
+			-DCMAKE_BUILD_TYPE:STRING=Asan \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
+			-S $(PWD)
+
+osx-cmake-tsan: check-toolchain
+	@mkdir -p tmp/OSX/$(ARCH)-Tsan-$(TOOLCHAIN)
+	cd tmp/OSX/$(ARCH)-Tsan-$(TOOLCHAIN) && \
+		$(CMAKE) -G "Unix Makefiles" \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
+			-DCMAKE_BUILD_TYPE:STRING=Tsan \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
+			-S $(PWD)
+
+osx-cmake-ubsan: check-toolchain
+	@mkdir -p tmp/OSX/$(ARCH)-Ubsan-$(TOOLCHAIN)
+	cd tmp/OSX/$(ARCH)-Ubsan-$(TOOLCHAIN) && \
+		$(CMAKE) -G "Unix Makefiles" \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS:STRING=ON \
+			-DCMAKE_BUILD_TYPE:STRING=Ubsan \
+			-DCMAKE_TOOLCHAIN_FILE:STRING=../../../build/CMake/Toolchains/$(TOOLCHAIN).cmake \
+			-DFUSION_BUILD_ROOT:STRING=$(PWD)/tmp \
+			-S $(PWD)
 
 #
 # Windows specific build targets
