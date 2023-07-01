@@ -143,6 +143,7 @@ list(APPEND fusion_link_targets
     libcurl   # curl
     fmt       # fmtlib for logging
     simdjson  # json parsing support
+    xxhash    # super fast hashing
 )
 
 target_link_libraries(Fusion PUBLIC ${fusion_link_targets})

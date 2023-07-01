@@ -154,6 +154,21 @@ if(FUSION_MAIN_PROJECT)
 endif()
 
 ################################
+# XXHash
+################################
+
+FUSION_INIT_GIT_SUBMODULE(xxhash/src)
+
+add_subdirectory(xxhash EXCLUDE_FROM_ALL)
+
+# Ensure that the fmt target ends up in the correct folder in the solution.
+set_property(TARGET xxhash PROPERTY FOLDER "External")
+
+if(FUSION_MAIN_PROJECT)
+    FSN_SET_TARGET_OUTPUT(xxhash "${FUSION_BUILD_ROOT}/external")
+endif()
+
+################################
 # ZLib (Next Generation)
 ################################
 

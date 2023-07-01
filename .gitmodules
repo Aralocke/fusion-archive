@@ -22,3 +22,6 @@
 [submodule "external/libraries/simdjson"]
 	path = external/libraries/simdjson
 	url = https://github.com/simdjson/simdjson.git
+[submodule "external/libraries/xxhash/src"]
+	path = external/libraries/xxhash/src
+	url = https://github.com/Cyan4973/xxHash.git
