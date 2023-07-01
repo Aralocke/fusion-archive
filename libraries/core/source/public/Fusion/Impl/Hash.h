@@ -121,4 +121,15 @@ void FNV<Algorithm>::Reset()
 }
 // FNV                                                       END
 // -------------------------------------------------------------
+// XXHASH                                                  START
+template<typename IntegralType>
+template<typename T>
+IntegralType XXHASH<IntegralType>::Hash(
+    std::span<const T> data,
+    IntegralType seed)
+{
+    return HashInternal(data.data(), data.size_bytes(), seed);
+}
+// XXHASH                                                     END
+// --------------------------------------------------------------
 }  // namespace Fusion

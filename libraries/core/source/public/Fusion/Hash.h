@@ -16,13 +16,16 @@
 
 #pragma once
 
+#include <Fusion/Fwd/Hash.h>
+
+#include <Fusion/Platform.h>
 #include <Fusion/Types.h>
 #include <Fusion/TypeTraits.h>
 
+#include <span>
+
 namespace Fusion
 {
-template<typename T> struct FnvSeed;
-
 //
 //
 //
@@ -137,6 +140,108 @@ using FNV1A32 = FNV<FNV1A<uint32_t>>;
 //
 //
 using FNV1A64 = FNV<FNV1A<uint64_t>>;
+
+//
+//
+//
+template<typename IntegralType>
+class XXHASH final
+{
+public:
+    //
+    //
+    //
+    template<typename T, size_t N, FUSION_REQUIRES(std::is_scalar_v<T>)>
+    static IntegralType Hash(
+        const T(&data)[N],
+        IntegralType seed = 0)
+    {
+        return HashInternal(data, N * sizeof(T), seed);
+    }
+
+    //
+    //
+    //
+    template<typename T, FUSION_REQUIRES(std::is_scalar_v<T>)>
+    static IntegralType Hash(
+        const T* data,
+        size_t count,
+        IntegralType seed = 0)
+    {
+        return HashInternal(data, count * sizeof(T), seed);
+    }
+
+    //
+    //
+    //
+    template<typename T>
+    static IntegralType Hash(
+        std::span<const T> data,
+        IntegralType seed = 0);
+
+    //
+    //
+    //
+    static IntegralType Hash(
+        const void* data,
+        size_t size,
+        IntegralType seed = 0);
+
+private:
+    static IntegralType HashInternal(
+        const void* data,
+        size_t size,
+        IntegralType seed = 0);
+};
+
+//
+//
+//
+using XXHASH32 = XXHASH<uint32_t>;
+
+//
+//
+//
+using XXHASH64 = XXHASH<uint64_t>;
+
+#if FUSION_32BIT
+//
+//
+//
+template<typename T>
+struct Hash<T, XXHASH32, std::enable_if_t<std::is_pod_v<T>>>
+{
+    size_t operator()(const T& data) const
+    {
+        return size_t(XXHASH32::Hash(&data, 1));
+    }
+};
+#elif FUSION_64BIT
+//
+//
+//
+template<typename T>
+struct Hash<T, XXHASH64, std::enable_if_t<std::is_pod_v<T>>>
+{
+    size_t operator()(const T& data) const
+    {
+        return size_t(XXHASH64::Hash(&data, 1));
+    }
+};
+#endif
+
+//
+//
+//
+template<typename T, typename Algorithm>
+struct Hash<T, Algorithm, std::enable_if_t<std::is_pod_v<T>>>
+{
+    size_t operator()(const T& data) const
+    {
+        return size_t(typename Algorithm::Hash(&data, 1));
+    }
+};
+
 }  // namespace Fusion
 
 #define FUSION_IMPL_HASH 1
