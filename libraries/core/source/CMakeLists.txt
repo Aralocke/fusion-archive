@@ -145,6 +145,13 @@ if(WIN32)
         ws2_32
     )
 endif()
+if(FUSION_PLATFORM_OSX)
+    list(APPEND fusion_public_link_targets
+        "-framework CoreFoundation"
+        "-framework Security"
+        "-framework SystemConfiguration"
+    )
+endif()
 
 list(APPEND fusion_private_link_targets
     crypto    # OpenSSL crypto library
