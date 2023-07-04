@@ -31,8 +31,11 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<OR:$<CONFIG:Debug>,$<CONFIG:Asa
 # Set Debug specific flags
 # /Z7 - produce .obj files for debugging
 # /FC - use full pathnames in debugging
-FSN_ADD_COMPILER_FLAGS(DEBUG CXX /Z7 /FC)
-FSN_ADD_COMPILER_FLAGS(DEBUG C /Z7 /FC)
+# /RTC1 - enable runtime-error checking
+# /Od - disables most optimizations
+# /Oy- disables frame pointer ommissions
+FSN_ADD_COMPILER_FLAGS(DEBUG CXX /Z7 /FC /RTC1 /Od /Oy-)
+FSN_ADD_COMPILER_FLAGS(DEBUG C /Z7 /FC /RTC1 /Od /Oy-)
 
 # Disable some Windows compilation warnings by default
 if(MSVC)
