@@ -121,7 +121,9 @@ target_include_directories(Fusion
 #
 target_compile_definitions(Fusion
     PUBLIC
-        -DFUSION_DEBUG=$<CONFIG:Debug,Asan>)
+        -DFUSION_DEBUG=$<CONFIG:Debug,Asan>
+)
+
 if(WIN32)
     target_compile_definitions(Fusion
         PUBLIC
@@ -131,19 +133,32 @@ endif()
 #
 # Configure link targets
 #
-list(APPEND fusion_link_targets "")
+list(APPEND fusion_public_link_targets "")
+list(APPEND fusion_private_link_targets "")
+
 if(FUSION_BUILD_RUST_EXTENSIONS)
-    list(APPEND fusion_link_targets Fusion::RustCore)
+    list(APPEND fusion_private_link_targets Fusion::RustCore)
 endif()
 if(WIN32)
-    list(APPEND fusion_link_targets ws2_32)
+    list(APPEND fusion_private_link_targets
+        bcrypt
+        ws2_32
+    )
 endif()
 
-list(APPEND fusion_link_targets
+list(APPEND fusion_private_link_targets
+    crypto    # OpenSSL crypto library
     libcurl   # curl
-    fmt       # fmtlib for logging
-    simdjson  # json parsing support
+    ssl       # OpenSSL SSL library
     xxhash    # super fast hashing
 )
 
-target_link_libraries(Fusion PUBLIC ${fusion_link_targets})
+list(APPEND fusion_public_link_targets
+    fmt       # fmtlib for logging
+    simdjson  # json parsing support
+)
+
+target_link_libraries(Fusion
+    PUBLIC ${fusion_public_link_targets}
+    PRIVATE ${fusion_private_link_targets}
+)
