@@ -16,8 +16,66 @@
 
 #pragma once
 
-#include <memory>
+#include <Fusion/Fwd/Crypto.h>
+
+#include <Fusion/DateTime.h>
+#include <Fusion/Result.h>
+
+#include <string>
+#include <vector>
 
 namespace Fusion
 {
+//
+//
+//
+class Crypto final
+{
+public:
+    //
+    //
+    //
+    static Result<std::vector<Certificate>> LoadSystemRootStore();
+
+public:
+    //
+    //
+    //
+    static Result<void> AddCertificate(
+        SSL_CTX* context,
+        X509* cert);
+
+public:
+    enum class CertificateVersion
+    {
+        v1,
+        v2,
+        v3,
+
+        Default = v3,
+    };
+
+    struct CertificateOptions
+    {
+        CertificateVersion version{ CertificateVersion::Default };
+        uint32_t serial{ 1 };
+
+        SystemClock::time_point notBefore{ SystemClock::now() };
+        SystemClock::time_point notAfter{ SystemClock::now() + std::chrono::months(12) };
+
+        std::string name;
+        std::string issuer;
+
+        std::string countryCode;
+        std::string stateProvinceName;
+        std::string localityName;
+        std::string organizationName;
+        std::string organizationalUnitName;
+        std::string commonName;
+
+        Certificate* signer{ nullptr };
+    };
+
+    static Result<Certificate> GenerateCertificate(CertificateOptions options);
+};
 }

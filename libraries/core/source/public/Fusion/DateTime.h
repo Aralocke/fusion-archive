@@ -21,4 +21,5 @@
 namespace Fusion
 {
 using Clock = std::chrono::steady_clock;
+using SystemClock = std::chrono::system_clock;
 }  // namespace Fusion
