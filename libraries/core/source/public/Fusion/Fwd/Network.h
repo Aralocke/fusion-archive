@@ -52,6 +52,7 @@ struct PollFd;
 
 class InetAddress;
 class Inet6Address;
+class KnownHosts;
 class Network;
 class SocketAddress;
 class SocketPair;

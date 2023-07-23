@@ -1547,6 +1547,45 @@ void Internal::MapAddressInfo(
 }
 // AddressInfo                                               END
 // -------------------------------------------------------------
+// KnownHosts                                              START
+KnownHosts::~KnownHosts() { }
+
+void KnownHosts::Add(
+    std::string_view hostname,
+    SocketAddress address)
+{
+    FUSION_UNUSED(hostname);
+    FUSION_UNUSED(address);
+}
+
+auto KnownHosts::begin() const -> AddressMap::const_iterator
+{
+    return m_addresses.begin();
+}
+
+auto KnownHosts::end() const -> AddressMap::const_iterator
+{
+    return m_addresses.end();
+}
+
+auto KnownHosts::cbegin() const -> AddressMap::const_iterator
+{
+    return m_addresses.cbegin();
+}
+
+auto KnownHosts::cend() const -> AddressMap::const_iterator
+{
+    return m_addresses.cend();
+}
+
+std::span<SocketAddress> KnownHosts::Lookup(
+    std::string_view hostname)
+{
+    FUSION_UNUSED(hostname);
+    return {};
+}
+// KnownHosts                                                END
+// -------------------------------------------------------------
 // Network                                                 START
 Result<std::unique_ptr<Network>> Network::Create()
 {

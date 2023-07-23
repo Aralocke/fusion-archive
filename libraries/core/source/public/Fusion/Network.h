@@ -25,6 +25,7 @@
 #include <array>
 #include <iosfwd>
 #include <functional>
+#include <map>
 #include <span>
 #include <string_view>
 #include <variant>
@@ -1191,6 +1192,45 @@ struct AddressInfo
     SocketType type{ SocketType::None };
     SocketProtocol protocol{ SocketProtocol::None };
     SocketAddress address;
+};
+
+//
+//
+//
+class KnownHosts final
+{
+public:
+    KnownHosts(const KnownHosts&) = delete;
+    KnownHosts& operator=(const KnownHosts&) = delete;
+
+public:
+    KnownHosts() = default;
+    ~KnownHosts();
+
+    //
+    //
+    //
+    void Add(std::string_view hostname, SocketAddress address);
+
+    //
+    //
+    //
+    std::span<SocketAddress> Lookup(std::string_view hostname);
+
+private:
+    using AddressMap = std::map<
+        std::string,
+        std::vector<SocketAddress>>;
+
+public:
+    auto begin() const->AddressMap::const_iterator;
+    auto end() const->AddressMap::const_iterator;
+
+    auto cbegin() const -> AddressMap::const_iterator;
+    auto cend() const->AddressMap::const_iterator;
+
+private:
+    AddressMap m_addresses;
 };
 
 //
