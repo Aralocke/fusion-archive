@@ -17,17 +17,27 @@
 #include <NetworkTool/LookupCommand.h>
 
 #include <Fusion/Argparse.h>
+#include <Fusion/Global.h>
+#include <Fusion/Http.h>
+#include <Fusion/Json.h>
 #include <Fusion/Network.h>
 
 #include <condition_variable>
 #include <iostream>
 #include <mutex>
 
+#include <fmt/format.h>
+
+#define FMT_FORMAT(message,...) \
+    fmt::format(FMT_STRING(message), __VA_ARGS__)
+
 namespace NetworkTool
 {
-Result<void> LookupCommand::Run(Options options)
+Result<void> LookupCommand::Run(
+    GlobalOptions& globalOptions,
+    Options options)
 {
-    LookupCommand cmd(std::move(options));
+    LookupCommand cmd(globalOptions, std::move(options));
     return cmd.Run();
 }
 
@@ -37,20 +47,34 @@ void LookupCommand::Setup(
 {
     using namespace std::string_view_literals;
 
+    cmd.AddArgument(options.record, "record", 'r')
+        .Default("A")
+        .Help("DNS record type to lookup");
+
+    cmd.AddArgument(options.server, "server", 's')
+        .Default("https://dns.google")
+        .Help("DOH server to use for lookup");
+
+    cmd.AddPositional(options.address, "address")
+        .Help("Hostname to lookup");
+
     cmd.Help("Run the Resolver tool"sv);
 }
 
-LookupCommand::LookupCommand(Options options)
-    : m_options(std::move(options))
+LookupCommand::LookupCommand(
+    GlobalOptions& globalOptions,
+    Options options)
+    : m_globalOptions(globalOptions)
+    , m_options(std::move(options))
 { }
 
 LookupCommand::~LookupCommand()
 {
-    //if (resolver)
-    //{
-    //    resolver->Stop();
-    //    resolver.reset();
-    //}
+    if (httpclient)
+    {
+        httpclient->Stop();
+        httpclient.reset();
+    }
     if (network)
     {
         network->Stop();
@@ -60,6 +84,18 @@ LookupCommand::~LookupCommand()
 
 Result<void> LookupCommand::Run()
 {
+    Global global(Global::Params{
+        .initializeCurl = true,
+        .initializeOpenssl = true,
+    });
+
+    if (Result<void> result = global.Start(
+        m_globalOptions); !result)
+    {
+        return result.Error()
+            .WithContext("Failed to initialize global state");
+    }
+
     if (auto result = Network::Create(); !result)
     {
         return result.Error()
@@ -70,57 +106,57 @@ Result<void> LookupCommand::Run()
         network = std::move(*result);
     }
 
-    /*
-    Resolver::Options resolverOptions;
-    if (auto result = Resolver::Create(
-        std::move(resolverOptions),
-        *network); !result)
+    HttpClient::Params httpClientParams{
+        .captureCertDetails = true,
+    };
+
+    std::unique_ptr<HttpClient> httpClient;
+    if (auto result = HttpClient::Create(std::move(httpClientParams)); !result)
     {
-        return result.Error()
-            .WithContext("failed to create resolver");
+        return result.Error().WithContext("failed to create HttpClient");
     }
     else
     {
-        resolver = std::move(*result);
+        httpClient = std::move(*result);
     }
-    */
 
-    std::mutex mutex;
-    std::condition_variable cond;
-    std::unique_lock lock(mutex);
+    std::string url = FMT_FORMAT("{}/resolve?name={}&type=A&do=1",
+        m_options.server,
+        m_options.address);
 
-    std::string address{ "google.com" };
-    fmt::print(FMT_STRING("Resolving: {}\n"), address);
+    HttpClient::RequestOptions options;
+    {
+        options.url = url;
+        options.method = HttpMethod::Get;
+    }
+    HttpClient::Request request;
 
-    /*
-    resolver->Resolve(address,
-        [&](Failure& error, ResolveResult& result)
-        {
-            fmt::print(FMT_STRING("Result for: {}\n"),
-                result.request->hostname);
+    if (auto result = httpClient->SendRequest(
+        std::move(options)); !result)
+    {
+        return result.Error()
+            .WithContext("Failed to send HTTP request");
+    }
+    else
+    {
+        request = std::move(*result);
+    }
 
-            if (error)
-            {
-                fmt::print(FMT_STRING("Failed to lookup hostname: {}\n"),
-                    error);
-            }
-            else
-            {
-                fmt::print(FMT_STRING("Canonical name: {}\n"),
-                    result.canonicalName);
-                fmt::print(FMT_STRING("Count: {}\n"),
-                    result.results.size());
-                for (const AddressInfo& result : result.results)
-                {
-                    fmt::print(FMT_STRING("address={}\n"), result.address);
-                }
-            }
-            cond.notify_one();
-        });
+    HttpClient::Response response = request.response.get();
 
-    cond.wait(lock);
-    fmt::print("Complete\n");
-    */
+    if (response.error)
+    {
+        return Failure(E_FAILURE)
+            .WithContext("request failed: {}", response.error);
+    }
+
+    simdjson::dom::parser parser;
+    simdjson::dom::element doc;
+
+    auto result = parser.parse(response.body);
+    std::ignore = result.get(doc);
+
+    PrettyPrint(std::cout, doc);
 
     return Success;
 }

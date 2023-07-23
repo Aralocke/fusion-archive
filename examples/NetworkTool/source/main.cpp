@@ -18,10 +18,13 @@
 #include <NetworkTool/ServerCommand.h>
 
 #include <Fusion/Argparse.h>
+#include <Fusion/Global.h>
 #include <Fusion/Main.h>
 
 #include <Fusion/Generated/Version.h>
 #include <Fusion/Generated/VersionCommand.h>
+
+#include <iostream>
 
 namespace Fusion
 {
@@ -30,10 +33,16 @@ namespace Fusion
         using namespace std::string_view_literals;
         using namespace NetworkTool;
 
+        FUSION_UNUSED(std::setvbuf(stdout, nullptr, _IONBF, 0));
+        FUSION_UNUSED(std::setvbuf(stderr, nullptr, _IONBF, 0));
+
         ArgumentParser parser(ArgumentParser::Params{
             .program = Version::Project(),
             .description = "Network Concept Exploratory Tool for select() operations"sv,
         });
+
+        GlobalOptions globalOptions;
+        Global::SetupArgumentParser(parser, globalOptions);
 
         VersionCommand::Options versionOptions;
         VersionCommand::Setup(parser, versionOptions);
@@ -49,13 +58,15 @@ namespace Fusion
         LookupCommand::Options lookupOptions;
         auto& lookupCmd = parser.AddCommand("lookup"sv)
             .Action([&](const ArgumentCommand&) -> Result<void> {
-                return LookupCommand::Run(std::move(lookupOptions));
+                return LookupCommand::Run(
+                    globalOptions,
+                    std::move(lookupOptions));
             });
 
         LookupCommand::Setup(lookupCmd, lookupOptions);
 
         ServerCommand::Options serverOptions;
-        auto& serverCmd = parser.AddCommand("client"sv)
+        auto& serverCmd = parser.AddCommand("server"sv)
             .Action([&](const ArgumentCommand&) -> Result<void> {
                 return ServerCommand::Run(std::move(serverOptions));
             });
@@ -64,6 +75,7 @@ namespace Fusion
 
         if (Result<void> result = parser.Parse(args); !result)
         {
+            std::cerr << "NetworkTool: "sv << result.Error().Message() << std::endl;
             return result.Error();
         }
         if (parser.Command().empty())
