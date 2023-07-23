@@ -17,6 +17,9 @@
 #include <Fusion/Playground/PlayCommand.h>
 
 #include <Fusion/Argparse.h>
+#include <Fusion/Global.h>
+#include <Fusion/Result.h>
+
 #include <iostream>
 
 #if defined(FUSION_RUST_ENABLED)
@@ -25,9 +28,11 @@
 
 namespace Fusion
 {
-Result<void> PlayCommand::Run(Options options)
+Result<void> PlayCommand::Run(
+    GlobalOptions& globalOptions,
+    Options options)
 {
-    PlayCommand cmd(options);
+    PlayCommand cmd(globalOptions, options);
     return cmd.Run();
 }
 
@@ -40,8 +45,11 @@ void PlayCommand::Setup(
     cmd.Help("Run the playground tool"sv);
 }
 
-PlayCommand::PlayCommand(Options options)
-    : m_options(options)
+PlayCommand::PlayCommand(
+    GlobalOptions& globalOptions,
+    Options options)
+    : m_globalOptions(globalOptions)
+    , m_options(options)
 { }
 
 PlayCommand::~PlayCommand() = default;
@@ -53,6 +61,7 @@ Result<void> PlayCommand::Run()
     RunPlayground();
 #endif
 
+    FUSION_UNUSED(m_globalOptions);
     FUSION_UNUSED(m_options);
     return Success;
 }

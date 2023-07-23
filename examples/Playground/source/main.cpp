@@ -16,10 +16,13 @@
 #include <Fusion/Playground/PlayCommand.h>
 
 #include <Fusion/Argparse.h>
+#include <Fusion/Global.h>
 #include <Fusion/Main.h>
 
 #include <Fusion/Generated/Version.h>
 #include <Fusion/Generated/VersionCommand.h>
+
+#include <iostream>
 
 namespace Fusion
 {
@@ -27,10 +30,16 @@ namespace Fusion
     {
         using namespace std::string_view_literals;
 
+        FUSION_UNUSED(std::setvbuf(stdout, nullptr, _IONBF, 0));
+        FUSION_UNUSED(std::setvbuf(stderr, nullptr, _IONBF, 0));
+
         ArgumentParser parser(ArgumentParser::Params{
             .program = Version::Project(),
             .description = "Playground exploratory tool"sv,
         });
+
+        GlobalOptions globalOptions;
+        Global::SetupArgumentParser(parser, globalOptions);
 
         VersionCommand::Options versionOptions;
         VersionCommand::Setup(parser, versionOptions);
@@ -38,13 +47,16 @@ namespace Fusion
         PlayCommand::Options playOptions;
         auto& playCmd = parser.AddCommand("play"sv)
             .Action([&](const ArgumentCommand&) -> Result<void> {
-                return PlayCommand::Run(std::move(playOptions));
+                return PlayCommand::Run(
+                    globalOptions,
+                    std::move(playOptions));
             });
 
         PlayCommand::Setup(playCmd, playOptions);
 
         if (Result<void> result = parser.Parse(args); !result)
         {
+            std::cerr << "Playground: "sv << result.Error().Message() << std::endl;
             return result.Error();
         }
         if (parser.Command().empty())

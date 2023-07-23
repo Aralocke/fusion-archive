@@ -21,6 +21,7 @@
 namespace Fusion
 {
 class ArgumentCommand;
+struct GlobalOptions;
 
 class PlayCommand final
 {
@@ -29,16 +30,22 @@ public:
     {};
 
 public:
-    static Result<void> Run(Options options);
+    static Result<void> Run(
+        GlobalOptions& globalOptions,
+        Options options);
+
     static void Setup(ArgumentCommand& cmd, Options& options);
 
 public:
-    PlayCommand(Options options);
+    PlayCommand(
+        GlobalOptions& globalOptions,
+        Options options);
     ~PlayCommand();
 
     Result<void> Run();
 
 private:
+    GlobalOptions& m_globalOptions;
     Options m_options;
 };
 }  // namespace
