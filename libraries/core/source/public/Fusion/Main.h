@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     {
         size_t length = StringUtil::Length(argv[i]);
         args[i] = { argv[i], length };
-        views[i] = args.back();
+        views[i] = args[i];
     }
 
     return _Main(views);
