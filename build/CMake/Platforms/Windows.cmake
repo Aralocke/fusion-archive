@@ -63,6 +63,7 @@ endif()
 # /UNICODE - Enable wchar_t types
 FSN_ADD_COMPILER_FLAGS(CXX /MP /GR- /GS /UNICODE)
 FSN_ADD_LINKER_FLAGS(/DEBUG /LARGEADDRESSAWARE)
+FSN_ADD_LINKER_FLAGS(RELEASE /OPT:REF /OPT:ICF)
 
 # Global Definitions that effect every project built.
 add_definitions(-D_CRT_SECURE_NO_WARNINGS=1)

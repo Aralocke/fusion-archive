@@ -19,24 +19,6 @@ endif()
 include(CheckCXXCompilerFlag)
 
 #
-# Add global linker flags
-#
-function(FSN_ADD_LINKER_FLAGS)
-    foreach(flag ${ARGN})
-        set(CMAKE_EXE_LINKER_FLAGS
-            "${CMAKE_EXE_LINKER_FLAGS} ${flag}"
-            CACHE STRING ""
-            FORCE
-        )
-        set(CMAKE_SHARED_LINKER_FLAGS
-            "${CMAKE_SHARED_LINKER_FLAGS} ${flag}"
-            CACHE STRING ""
-            FORCE
-        )
-    endforeach()
-endfunction()
-
-#
 # Ensure that there are no duplicates in a "space separated" variable being used as a list.
 #
 macro(FSN_REMOVE_DUPES ARG_STR OUTPUT)
@@ -47,6 +29,68 @@ macro(FSN_REMOVE_DUPES ARG_STR OUTPUT)
     string(REGEX REPLACE "[\\](.)" "\\1" _TMP_STR "${_TMP_STR}") #fixes escaping
     set(${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
 endmacro()
+
+#
+# Add global linker flags
+#
+function(FSN_ADD_LINKER_FLAGS)
+    set(flags_list "")
+    FSN_PARSE_ARGUMENTS(ARG "" "SHARED;MODULE;EXECUTABLE;DEBUG;RELEASE" ${ARGN})
+
+    if(NOT ARG_DEBUG AND NOT ARG_RELEASE)
+        foreach(flag ${ARG_DEFAULT_ARGS})
+            set(flags_list "${flags_list} ${flag}")
+        endforeach()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_SHARED)
+            FSN_REMOVE_DUPES("${CMAKE_SHARED_LINKER_FLAGS} ${flags_list}" CMAKE_SHARED_LINKER_FLAGS)
+        endif()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_MODULE)
+            FSN_REMOVE_DUPES("${CMAKE_MODULE_LINKER_FLAGS} ${flags_list}" CMAKE_MODULE_LINKER_FLAGS)
+        endif()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_EXECUTABLE)
+            FSN_REMOVE_DUPES("${CMAKE_SHARED_LINKER_FLAGS} ${flags_list}" CMAKE_SHARED_LINKER_FLAGS)
+        endif()
+    elseif(ARG_DEBUG)
+        foreach(flag ${ARG_DEFAULT_ARGS})
+            set(flags_list "${flags_list} ${flag}")
+        endforeach()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_SHARED)
+            foreach(CFG IN LISTS FUSION_DEBUG_CONFIGS)
+                FSN_REMOVE_DUPES("${CMAKE_SHARED_LINKER_FLAGS_${CONFIG}} ${flags_list}" CMAKE_SHARED_LINKER_FLAGS_${CONFIG})
+            endforeach()
+        endif()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_MODULE)
+            foreach(CFG IN LISTS FUSION_DEBUG_CONFIGS)
+                FSN_REMOVE_DUPES("${CMAKE_MODULE_LINKER_FLAGS_${CONFIG}} ${flags_list}" CMAKE_MODULE_LINKER_FLAGS_${CONFIG})
+            endforeach()
+        endif()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_EXECUTABLE)
+            foreach(CFG IN LISTS FUSION_DEBUG_CONFIGS)
+                FSN_REMOVE_DUPES("${CMAKE_SHARED_LINKER_FLAGS_${CONFIG}} ${flags_list}" CMAKE_SHARED_LINKER_FLAGS_${CONFIG})
+            endforeach()
+        endif()
+    elseif(ARG_RELEASE)
+        foreach(flag ${ARG_DEFAULT_ARGS})
+            set(flags_list "${flags_list} ${flag}")
+        endforeach()
+        message(STATUS "(RELEASE) flags_list=${flags_list}")
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_SHARED)
+            foreach(CFG IN LISTS FUSION_RELEASE_CONFIGS)
+                FSN_REMOVE_DUPES("${CMAKE_SHARED_LINKER_FLAGS_${CFG}} ${flags_list}" CMAKE_SHARED_LINKER_FLAGS_${CFG})
+            endforeach()
+        endif()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_MODULE)
+            foreach(CFG IN LISTS FUSION_RELEASE_CONFIGS)
+                FSN_REMOVE_DUPES("${CMAKE_MODULE_LINKER_FLAGS_${CFG}} ${flags_list}" CMAKE_MODULE_LINKER_FLAGS_${CFG})
+            endforeach()
+        endif()
+        if(NOT ARG_SHARED AND NOT ARG_MODULE AND NOT ARG_EXECUTABLE OR ARG_EXECUTABLE)
+            foreach(CFG IN LISTS FUSION_RELEASE_CONFIGS)
+                FSN_REMOVE_DUPES("${CMAKE_SHARED_LINKER_FLAGS_${CFG}} ${flags_list}" CMAKE_SHARED_LINKER_FLAGS_${CFG})
+            endforeach()
+        endif()
+    endif()
+endfunction()
 
 #
 # Add compiler flags for C / CXX configurations globally.
