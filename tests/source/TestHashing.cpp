@@ -40,3 +40,12 @@ HashingTests::Tests() const
     return HashData;
 }
 }
+
+TEST_F(HashingTests, Md5)
+{
+    RunHashTest<MD5>(
+        [&](MD5::Digest& digest, const HashTest& test)
+        {
+            CheckHash(digest, test.md5);
+        });
+}
