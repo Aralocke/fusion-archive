@@ -58,3 +58,12 @@ TEST_F(HashingTests, Sha1)
             CheckHash(digest, test.sha1);
         });
 }
+
+TEST_F(HashingTests, Sha256)
+{
+    RunHashTest<SHA256>(
+        [&](SHA256::Digest& digest, const HashTest& test)
+        {
+            CheckHash(digest, test.sha256);
+        });
+}

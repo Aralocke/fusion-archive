@@ -250,6 +250,7 @@ enum class MdHashType : uint8_t
 {
     Md5 = 16U,
     Sha1 = 20U,
+    Sha256 = 32U,
 };
 
 //
@@ -350,6 +351,7 @@ private:
 
 using MD5 = MDHash<MdHashType::Md5>;
 using SHA1 = MDHash<MdHashType::Sha1>;
+using SHA256 = MDHash<MdHashType::Sha256>;
 }  // namespace Fusion
 
 #define FUSION_IMPL_HASH 1
