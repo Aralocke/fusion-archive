@@ -249,6 +249,7 @@ struct Hash<T, Algorithm, std::enable_if_t<std::is_pod_v<T>>>
 enum class MdHashType : uint8_t
 {
     Md5 = 16U,
+    Sha1 = 20U,
 };
 
 //
@@ -348,6 +349,7 @@ private:
 };
 
 using MD5 = MDHash<MdHashType::Md5>;
+using SHA1 = MDHash<MdHashType::Sha1>;
 }  // namespace Fusion
 
 #define FUSION_IMPL_HASH 1

@@ -49,3 +49,12 @@ TEST_F(HashingTests, Md5)
             CheckHash(digest, test.md5);
         });
 }
+
+TEST_F(HashingTests, Sha1)
+{
+    RunHashTest<SHA1>(
+        [&](SHA1::Digest& digest, const HashTest& test)
+        {
+            CheckHash(digest, test.sha1);
+        });
+}
