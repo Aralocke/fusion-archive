@@ -60,16 +60,15 @@ std::span<uint8_t> Ascii::FromHexString(
     auto* b = static_cast<const char*>(str.data());
     auto* outputU8 = static_cast<uint8_t*>(buffer);
 
-    size_t i = 0;
-    while (i < hexLength && i + 2 < size)
+    for (size_t i = 0; i < hexLength; ++i)
     {
         uint8_t high = ToNibble(*b++);
         uint8_t low = ToNibble(*b++);
 
-        outputU8[i++] = ToHexByte(high, low);
+        outputU8[i] = ToHexByte(high, low);
     }
 
-    return { outputU8, i };
+    return { outputU8, hexLength };
 }
 
 bool Ascii::IsFalseString(std::string_view str)
@@ -150,6 +149,30 @@ std::string_view Ascii::ToHexString(
 
     buffer[i] = 0;
     return { buffer, i };
+}
+
+std::string Ascii::ToHexString(
+    const void* bytes,
+    size_t size)
+{
+    if (!bytes || size == 0 || size % 2 != 0)
+    {
+        return {};
+    }
+
+    std::string s;
+    s.reserve(size * 2);
+
+    auto* inputU8 = static_cast<const uint8_t*>(bytes);
+
+    
+    for (size_t i = 0; i < size; ++i)
+    {
+        s += HEX_CHARACTERS[(*inputU8 >> 4) & 0xF];
+        s += HEX_CHARACTERS[*inputU8++ & 0xF];
+    }
+
+    return s;
 }
 
 std::string_view Ascii::ToOctalString(

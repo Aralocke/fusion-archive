@@ -168,6 +168,11 @@ public:
     //
     //
     //
+    static std::string ToHexString(const void* bytes, size_t size);
+
+    //
+    //
+    //
     static constexpr uint8_t ToLower(uint8_t c)
     {
         return IsUpper(c) ? c - ('A' - 'a') : c;
