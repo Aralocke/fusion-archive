@@ -18,6 +18,7 @@
 
 #include <Fusion/Fwd/Hash.h>
 
+#include <Fusion/Hex.h>
 #include <Fusion/Platform.h>
 #include <Fusion/Types.h>
 #include <Fusion/TypeTraits.h>
@@ -242,6 +243,110 @@ struct Hash<T, Algorithm, std::enable_if_t<std::is_pod_v<T>>>
     }
 };
 
+//
+//
+//
+enum class MdHashType : uint8_t
+{
+};
+
+//
+//
+//
+template<MdHashType Type>
+class MDHash final
+{
+public:
+    MDHash(const MDHash&) = delete;
+    MDHash& operator=(const MDHash&) = delete;
+
+public:
+    static constexpr size_t LENGTH = size_t(Type);
+    using Digest = Hex<size_t(Type)>;
+
+public:
+    //
+    //
+    //
+    MDHash();
+
+    ~MDHash() = default;
+
+    //
+    //
+    //
+    void Finish(Digest& digest);
+
+    //
+    //
+    //
+    template<size_t size>
+    void Finish(uint8_t(&digest)[size]);
+
+    //
+    //
+    //
+    void Process(std::string_view s);
+
+    //
+    //
+    //
+    void Process(std::span<const uint8_t> s);
+
+    //
+    //
+    //
+    void Process(const char* data);
+
+    //
+    //
+    //
+    void Process(const void* buffer, size_t size);
+
+    //
+    //
+    //
+    template<size_t size>
+    void Process(const uint8_t(&data)[size]);
+
+public:
+    //
+    //
+    //
+    void Finish(std::span<uint8_t> digest);
+
+    //
+    //
+    //
+    void Reset();
+
+private:
+    //
+    // Process 64 bytes
+    //
+    void ProcessBlock(std::span<const uint8_t> input);
+
+    //
+    // Process the final block in the internal buffer
+    //
+    void ProcessBuffer();
+
+private:
+    using DigestStorage = std::array<uint32_t, Digest::SIZE / 4U>;
+    using BufferStorage = std::array<uint8_t, 64U>;
+
+private:
+    // Size of processed data in bytes
+    uint64_t m_size{ 0 };
+    // valid bytes in m_buffer
+    size_t m_bufferSize{ 0 };
+    // Hash stored as integers
+    DigestStorage m_digest;
+    // bytes to process
+    BufferStorage m_buffer;
+};
+
+};
 }  // namespace Fusion
 
 #define FUSION_IMPL_HASH 1

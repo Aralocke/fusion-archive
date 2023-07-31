@@ -14,22 +14,29 @@
  * limitations under the License.
  **/
 
-#pragma once
+#include <Fusion/Tests/Tests.h>
 
-#include <Fusion/Types.h>
+#include <Fusion/Fixtures/Hashing.h>
+
+#include <Fusion/Ascii.h>
+#include <Fusion/Hash.h>
 
 namespace Fusion
 {
-enum class MdHashType : uint8_t;
+void HashingTests::CheckHash(
+    std::span<const uint8_t> input,
+    std::string_view hash)
+{
+    ASSERT_EQ(
+        Ascii::ToHexString(
+            input.data(),
+            input.size()),
+        hash);
+}
 
-template<typename> struct FnvSeed;
-template<typename> class Fnv;
-template<MdHashType> class MDHash;
-template<typename> class XXHASH;
-
-template<
-    typename T,
-    typename Algorithm,
-    typename Enable = void>
-struct Hash;
-}  // namespace Fusion
+std::span<const HashingTests::HashTest>
+HashingTests::Tests() const
+{
+    return HashData;
+}
+}
