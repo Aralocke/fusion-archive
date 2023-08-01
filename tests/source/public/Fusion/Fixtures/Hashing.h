@@ -36,10 +36,19 @@ public:
         std::string_view data;
     };
 
-    struct HmacTest {};
+    struct HmacTest
+    {
+        std::string_view md5;
+        std::string_view sha1;
+        std::string_view sha256;
+        std::string_view key;
+        std::string_view data;
+    };
 
 public:
     std::span<const HashTest> Tests() const;
+
+    std::span<const HmacTest> HmacTests() const;
 
 public:
     void CheckHash(std::span<const uint8_t> input, std::string_view hash);
@@ -57,6 +66,33 @@ public:
             Method method;
             method.Process(test.data);
             method.Finish(digest);
+
+            fn(digest, test);
+        }
+    }
+
+    template<typename Method>
+    void RunHmacTest(
+        std::function<void(typename Method::Digest&, const HmacTest&)> fn)
+    {
+        using Digest = typename Method::Digest;
+
+        for (const HmacTest& test : HmacTests())
+        {
+            std::span<const uint8_t> key{
+                reinterpret_cast<const uint8_t*>(
+                    test.key.data()),
+                test.key.size()
+            };
+
+            std::span<const uint8_t> data{
+                reinterpret_cast<const uint8_t*>(
+                    test.data.data()),
+                test.data.size()
+            };
+
+            Digest digest;
+            HMAC<Method>(key, data, digest);
 
             fn(digest, test);
         }
@@ -177,6 +213,65 @@ private:
             "something as tasty as meat, but inorganically materialized out of patterns used by our "
             "transporters.Captain, the most elementaryand valuable statement in science, the beginning of "
             "wisdom, is 'I do not know.' All transporters off.\n"
+        },
+    });
+
+    static constexpr auto HmacData = std::to_array<HmacTest>({
+        {
+            "804904ec33c31ae4fc8088a42882a247",
+            "aa575e0187e496fa3bf742945bea9185dc1497e4",
+            "08417f50f9a1898bf747a073e08b26029a70ac883f290d03fc7e19dd8182960b",
+            "ea99",
+            "6472ab343b204299e25109488e569fcf",
+        },
+        {
+            "5d75abd09ec514a710630cf8d153d63b",
+            "732dda769546e7cb63ec6802a5117924bfb04db1",
+            "47594a0f535acb2248ecff29271dcc479cc9291fc705c2cf5a2307cb09a9f2f9",
+            "58623b23",
+            "2b627740915549f96112e7e4bba821c9"
+        },
+        {
+            "80e05eef4dece53c7e29119f66d76201",
+            "8a1e32d3be5855a795b8200a44b72a611f05f809",
+            "a297b551a9b11521515de87314eeda6d87f29410384944d8e9d5f80fded79a69",
+            "3c893f4a570240e1",
+            "17b0eacc73e245f726bf9059ea9dfbeb"
+        },
+        {
+            "da64f9bd2b50164ceb9a3bb8a8bd3a7b",
+            "ff7a0eda80b87af5ba9131874e74b93e088ce078",
+            "378823a5a5ad4193561eb315e1db93ca90211e2145891e1f3950cba29f1997b1",
+            "51306f5b0b7b4a93cdafd0216a",
+            "72913e81a063d54d908c3c6fbc99f412"
+        },
+        {
+            "17ee2c5616d5940d640d27ac1ccc6722",
+            "e00e94901428ae1bc3c72f3cc3dc08fce09ff43b",
+            "953d27ea817b445f32fe40375bc9e95164335211d8404a35da03fb4e602148cf",
+            "c99e4e0cc1cec01257681b07be7e478e",
+            "e14bb6d5e0ad18d132cabf907228de83"
+        },
+        {
+            "954f4e6b5e56f7f144a9b8e425f47b24",
+            "c1ff4dff2f684a01bcb46f78f6e6c244ad6dc3a9",
+            "8a00f0ebbbcfb86742ef513b5c9bc65844e4b1b582c03c7592c4b3d4e49c6832",
+            "The engineering section's critical. Destruction is imminent.",
+            "Recommend we adjust shield harmonics to the upper EM band when proceeding. These appear to be some kind of power-wave-guide conduits which allow them to work collectively as they perform ship functions."
+        },
+        {
+            "ecae437dbc93b4b1a39b8a82a53ac356",
+            "0f9ead719e24ef23d3e94a5c5d6ef7eebdc42dce",
+            "93e3567b4b8c3132fb0cc0151ea586789876e6fac38e3b42b7a4835fadf1d17a",
+            "That's why the transporter's biofilters couldn't extract it. The vertex waves show a K-complex corresponding to an REM state. The engineering section's critical. Destruction is imminent.",
+            "Exceeding reaction chamber thermal limit. We have begun power-supply calibration. Force fields have been established on all turbo lifts and crawlways. Computer, run a level-two diagnostic on warp-drive systems. Antimatter containment positive. Warp drive within normal parameters. I read an ion trail characteristic of a freighter escape pod. The bomb had a molecular-decay detonator. Detecting some unusual fluctuations in subspace frequencies."
+        },
+        {
+            "b7bf638bbbe688cc17eda9291f7432b2",
+            "c6f8c878d81571eb3228265093feb34b5d919ff4",
+            "37c4fd4cd4f14ebd2a3ea1823baa461c27724caf59879ea8663a7d2d87f36ed9",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quisque egestas diam in arcu cursus euismod quis viverra. Pretium vulputate sapien nec sagittis aliquam malesuada bibendum arcu. Malesuada nunc vel risus commodo viverra. Amet risus nullam eget felis eget nunc lobortis mattis aliquam. Bibendum neque egestas congue quisque egestas diam. Nulla malesuada pellentesque elit eget gravida cum sociis natoque. Quam elementum pulvinar etiam non quam lacus suspendisse faucibus interdum. Tempus urna et pharetra pharetra. Sed egestas egestas fringilla phasellus faucibus scelerisque eleifend donec. Pretium lectus quam id leo in vitae turpis massa sed. Ut tellus elementum sagittis vitae et. Ac turpis egestas maecenas pharetra convallis posuere. Sit amet mauris commodo quis imperdiet massa tincidunt nunc. Laoreet id donec ultrices tincidunt arcu non sodales. Porta non pulvinar neque laoreet suspendisse interdum consectetur libero. Blandit turpis cursus in hac habitasse platea dictumst quisque. Non tellus orci ac auctor augue."
         },
     });
 };

@@ -265,7 +265,9 @@ public:
 
 public:
     static constexpr size_t LENGTH = size_t(Type);
-    using Digest = Hex<size_t(Type)>;
+    static constexpr MdHashType HashType = Type;
+
+    using Digest = Hex<LENGTH>;
 
 public:
     //
@@ -352,6 +354,24 @@ private:
 using MD5 = MDHash<MdHashType::Md5>;
 using SHA1 = MDHash<MdHashType::Sha1>;
 using SHA256 = MDHash<MdHashType::Sha256>;
+
+//
+//
+//
+void HMAC(
+    std::span<const uint8_t> key,
+    std::span<const uint8_t> data,
+    std::span<uint8_t> output,
+    MdHashType type);
+
+//
+//
+//
+template<typename Method>
+void HMAC(
+    std::span<const uint8_t> key,
+    std::span<const uint8_t> data,
+    typename Method::Digest& output);
 }  // namespace Fusion
 
 #define FUSION_IMPL_HASH 1

@@ -153,9 +153,9 @@ IntegralType XXHASH<IntegralType>::Hash(
 }
 
 #pragma endregion XXHASH
-// XXHASH                                                     END
-// --------------------------------------------------------------
-// MDHash                                                 START
+// XXHASH                                                    END
+// -------------------------------------------------------------
+// MDHash                                                  START
 #pragma region MDHash
 
 template<MdHashType Type>
@@ -253,6 +253,27 @@ void MDHash<Type>::Process(const uint8_t(&data)[size])
 }
 
 #pragma endregion MDHash
-// MDHash                                                   END
-// --------------------------------------------------------------
+// MDHash                                                    END
+// -------------------------------------------------------------
+// HMAC                                                    START
+#pragma region HMAC
+
+template<typename Method>
+void HMAC(
+    std::span<const uint8_t> key,
+    std::span<const uint8_t> data,
+    typename Method::Digest& output)
+{
+    HMAC(
+        key,
+        data,
+        std::span<uint8_t>(output.Data(), output.Capacity()),
+        Method::HashType);
+
+    output.size = output.Capacity();
+}
+
+#pragma endregion HMAC
+// HMAC                                                      END
+// -------------------------------------------------------------
 }  // namespace Fusion
