@@ -46,9 +46,12 @@
 #define FUSION_64BIT 0
 
 // Determine if we're on ARM or X86
-#define FUSION_IS_ARM 0
-#define FUSION_IS_ARM64 0
-#define FUSION_IS_X86 0
+#define FUSION_PROC_ARM 0
+#define FUSION_PROC_ARM_32 0
+#define FUSION_PROC_ARM_64 0
+#define FUSION_PROC_X86 0
+#define FUSION_PROC_X86_32 0
+#define FUSION_PROC_X86_64 0
 
 // Determine endian-ness
 #define FUSION_BIG_ENDIAN 0
@@ -152,22 +155,18 @@
 #endif  // UNIX check
 
 #if defined(i386) || defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(EMSCRIPTEN) || defined(__EMSCRIPTEN__)
-#undef FUSION_32BIT
-#define FUSION_32BIT 1
-#undef FUSION_IS_X86
-#define FUSION_IS_X86 1
+#undef FUSION_PROC_X86_32
+#define FUSION_PROC_X86_32 1
 #undef FUSION_LITTLE_ENDIAN
 #define FUSION_LITTLE_ENDIAN 1
 #elif defined(__x86_64__) || defined(_M_X64)
-#undef FUSION_64BIT
-#define FUSION_64BIT 1
-#undef FUSION_IS_X86
-#define FUSION_IS_X86 1
+#undef FUSION_PROC_X86_64
+#define FUSION_PROC_X86_64 1
 #undef FUSION_LITTLE_ENDIAN
 #define FUSION_LITTLE_ENDIAN 1
 #elif defined(__arm__) || defined(__arm) || defined(ARM) || defined(_ARM_) || defined(__ARM__) || defined(_M_ARM)
-#undef FUSION_IS_ARM
-#define FUSION_IS_ARM 1
+#undef FUSION_PROC_ARM_32
+#define FUSION_PROC_ARM_32 1
 #if defined(__ARMEB__)
 #undef FUSION_BIG_ENDIAN
 #define FUSION_BIG_ENDIAN 1
@@ -176,8 +175,8 @@
 #define FUSION_LITTLE_ENDIAN 1
 #endif
 #elif defined(__arm64__) || defined(__arm64)
-#undef FUSION_IS_ARM64
-#define FUSION_IS_ARM64 1
+#undef FUSION_PROC_ARM_64
+#define FUSION_PROC_ARM_64 1
 #if defined(__ARMEB__)
 #undef FUSION_BIG_ENDIAN
 #define FUSION_BIG_ENDIAN 1
@@ -193,4 +192,21 @@
 #elif defined(__AARCH64EB__)
 #undef FUSION_BIG_ENDIAN
 #define FUSION_BIG_ENDIAN 1
+#endif
+
+#if FUSION_PROC_X86_32 || FUSION_PROC_X86_64
+#undef FUSION_PROC_X86
+#define FUSION_PROC_X86 1
+#endif
+#if FUSION_PROC_ARM_32 || FUSION_PROC_ARM_64
+#undef FUSION_PROC_ARM
+#define FUSION_PROC_ARM 1
+#endif
+
+#if FUSION_PROC_X86_32 || FUSION_PROC_ARM_32
+#undef FUSION_32BIT
+#define FUSION_32BIT 1
+#elif FUSION_PROC_X86_64 || FUSION_PROC_ARM_64
+#undef FUSION_64BIT
+#define FUSION_64BIT 1
 #endif
