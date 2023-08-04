@@ -55,6 +55,12 @@
 #error "Unknown compiler"
 #endif
 
+#ifdef __has_builtin
+#define FUSION_HAS_BUILTIN(a) __has_builtin(a)
+#else
+#define FUSION_HAS_BUILTIN(a) 0
+#endif
+
 /// Allow for querying 'FUSION_COMPILER(<compiler>)' in macro code.
 /// Available options are all of the defined 'FUSION_COMPILER_*' macros
 /// or:
