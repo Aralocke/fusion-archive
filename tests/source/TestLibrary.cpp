@@ -6,15 +6,21 @@
 
 typedef int32_t LibraryAddFn(int32_t, int32_t);
 
-constexpr const char buildPlatform[] = FUSION_STRINGIZE(FUSION_BUILD_PLATFORM);
-constexpr const char buildArch[] = FUSION_STRINGIZE(FUSION_BUILD_ARCH);
-constexpr const char buildConfig[] = FUSION_STRINGIZE(FUSION_BUILD_CONFIG);
+constexpr std::string_view buildPlatform = FUSION_STRINGIZE(FUSION_BUILD_PLATFORM);
+constexpr std::string_view buildArch = FUSION_STRINGIZE(FUSION_BUILD_ARCH);
+constexpr std::string_view buildConfig = FUSION_STRINGIZE(FUSION_BUILD_CONFIG);
 
 TEST(LibraryTests, LoadUnload)
 {
     // This will probably break if the UnitTests are run from something
     // other than the repository root. Look into making this more dynamic
     // later or maybe using filesystem recursive finds or something.
+
+    std::string_view suffix;
+    if (buildConfig == "Debug")
+    {
+        suffix = "-d"sv;
+    }
 
     std::string path;
     {
@@ -26,7 +32,7 @@ TEST(LibraryTests, LoadUnload)
         o << "-"sv;
         o << buildConfig;
         o << "/bin/"sv;
-        o << Library::FormatLibraryName("TestLibrary");
+        o << Library::FormatLibraryName("TestLibrary", suffix);
         path = o.str();
     }
 

@@ -24,7 +24,9 @@
 
 namespace Fusion
 {
-std::string Library::FormatLibraryName(std::string_view lib)
+std::string Library::FormatLibraryName(
+    std::string_view name,
+    std::string_view suffix)
 {
 #if FUSION_PLATFORM_WINDOWS
     constexpr const std::string_view prefix{ "" };
@@ -37,9 +39,10 @@ std::string Library::FormatLibraryName(std::string_view lib)
     constexpr const std::string_view extension{ "dylib" };
 #endif
 
-    return fmt::format(FMT_STRING("{}{}.{}"),
+    return fmt::format(FMT_STRING("{}{}{}.{}"),
         prefix,
-        lib,
+        name,
+        suffix,
         extension);
 }
 

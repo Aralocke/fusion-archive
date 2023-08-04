@@ -50,7 +50,9 @@ public:
     //
     //
     //
-    static std::string FormatLibraryName(std::string_view lib);
+    static std::string FormatLibraryName(
+        std::string_view name,
+        std::string_view suffix = {});
 
     //
     //
