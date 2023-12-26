@@ -23,14 +23,14 @@
 namespace Fusion
 {
 template<typename ...Args>
-Failure::Failure(fmt::format_string<Args...> format, Args&& ...args)
+Failure::Failure(fmt::format_string<Args...> format, Args&& ...args) noexcept
     : m_error(E_FAILURE)
 {
     try
     {
-        std::string message = fmt::vformat(
+        std::string message = fmt::format(
             format,
-            fmt::make_format_args(std::forward<Args>(args)...));
+            std::forward<Args>(args)...);
 
         WithContext(std::move(message));
     }
@@ -40,18 +40,22 @@ Failure::Failure(fmt::format_string<Args...> format, Args&& ...args)
     }
     catch (...)
     {
-        throw;
+        // TODO: Don't crash here
+
+        std::abort();
     }
 }
 
 template<typename ...Args>
-Failure& Failure::WithContext(fmt::format_string<Args...> format, Args&& ...args)
+Failure& Failure::WithContext(
+    fmt::format_string<Args...> format,
+    Args&& ...args) noexcept
 {
     try
     {
-        std::string message = fmt::vformat(
+        std::string message = fmt::format(
             format,
-            fmt::make_format_args(std::forward<Args>(args)...));
+            std::forward<Args>(args)...);
 
         WithContext(std::move(message));
     }
@@ -61,7 +65,9 @@ Failure& Failure::WithContext(fmt::format_string<Args...> format, Args&& ...args
     }
     catch (...)
     {
-        throw;
+        // TODO: Don't crash here
+
+        std::abort();
     }
 
     return *this;

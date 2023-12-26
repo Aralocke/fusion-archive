@@ -273,7 +273,7 @@ public:
     //
     //
     template<typename ...Args>
-    Failure(fmt::format_string<Args...> format, Args&& ...args);
+    Failure(fmt::format_string<Args...> format, Args&& ...args) noexcept;
 
     //
     //
@@ -324,7 +324,7 @@ public:
     //
     //
     template<typename ...Args>
-    Failure& WithContext(fmt::format_string<Args...> format, Args&& ...args);
+    Failure& WithContext(fmt::format_string<Args...> format, Args&& ...args) noexcept;
 
 private:
     std::string m_message;

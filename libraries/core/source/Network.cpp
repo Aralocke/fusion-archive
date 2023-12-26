@@ -28,6 +28,7 @@
 #include <Fusion/Internal/SelectSocketService.h>
 #include <Fusion/Internal/StandardNetwork.h>
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
