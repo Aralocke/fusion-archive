@@ -93,6 +93,15 @@ bool Ascii::IsTrueString(std::string_view str)
         });
 }
 
+char Ascii::ToHexChar(uint8_t b)
+{
+    if (b < HEX_CHARACTERS.size())
+    {
+        return HEX_CHARACTERS[b];
+    }
+    return 0;
+}
+
 std::string_view Ascii::ToHexString(
     uint64_t value,
     char* buffer,

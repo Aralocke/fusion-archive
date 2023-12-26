@@ -151,6 +151,11 @@ public:
     //
     //
     //
+    static char ToHexChar(uint8_t b);
+
+    //
+    //
+    //
     static std::string_view ToHexString(
         uint64_t value,
         char* buffer,
