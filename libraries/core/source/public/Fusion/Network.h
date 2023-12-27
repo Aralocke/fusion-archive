@@ -311,6 +311,7 @@ enum class SocketOpt : uint8_t
     TcpKeepIdle,
     TcpKeepInterval,
     TimeToLive,
+    Type,
 
     _Count
 };
@@ -1180,6 +1181,11 @@ namespace SocketOptions
     //
     //
     using TimeToLive = SocketOption<SocketOpt::TimeToLive, int32_t>;
+
+    //
+    //
+    //
+    using Type = SocketOption<SocketOpt::Type, int32_t>;
 };
 
 //
@@ -1295,7 +1301,7 @@ public:
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
-        SocketOption<opt, bool> option);
+        SocketOption<opt, bool> option) const;
 
     //
     //
@@ -1303,7 +1309,7 @@ public:
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
-        SocketOption<opt, int32_t> option);
+        SocketOption<opt, int32_t> option) const;
 
     //
     //
@@ -1311,7 +1317,7 @@ public:
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
-        SocketOption<opt, Clock::duration> option);
+        SocketOption<opt, Clock::duration> option) const;
 
     //
     //
@@ -1319,7 +1325,12 @@ public:
     template<SocketOpt opt>
     Result<void> GetSocketOption(
         Socket sock,
-        SocketOption<opt, MulticastGroup> option);
+        SocketOption<opt, MulticastGroup> option) const;
+
+    //
+    //
+    //
+    Result<SocketType> GetSocketType(Socket sock) const;
 
     //
     //

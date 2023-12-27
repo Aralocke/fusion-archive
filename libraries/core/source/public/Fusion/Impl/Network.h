@@ -135,7 +135,7 @@ SocketOption<opt, T>::SocketOption(T value)
 template<SocketOpt opt>
 Result<void> Network::GetSocketOption(
     Socket sock,
-    SocketOption<opt, bool> option)
+    SocketOption<opt, bool> option) const
 {
     if (sock == INVALID_SOCKET)
     {
@@ -161,7 +161,7 @@ Result<void> Network::GetSocketOption(
 template<SocketOpt opt>
 Result<void> Network::GetSocketOption(
     Socket sock,
-    SocketOption<opt, int32_t> option)
+    SocketOption<opt, int32_t> option) const
 {
     if (sock == INVALID_SOCKET)
     {
@@ -183,7 +183,7 @@ Result<void> Network::GetSocketOption(
 template<SocketOpt opt>
 Result<void> Network::GetSocketOption(
     Socket sock,
-    SocketOption<opt, Clock::duration> option)
+    SocketOption<opt, Clock::duration> option) const
 {
     FUSION_UNUSED(sock);
     FUSION_UNUSED(option);
@@ -194,7 +194,7 @@ Result<void> Network::GetSocketOption(
 template<SocketOpt opt>
 Result<void> Network::GetSocketOption(
     Socket sock,
-    SocketOption<opt, MulticastGroup> option)
+    SocketOption<opt, MulticastGroup> option) const
 {
     FUSION_UNUSED(sock);
     FUSION_UNUSED(option);

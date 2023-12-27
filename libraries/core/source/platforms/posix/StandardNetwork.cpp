@@ -140,9 +140,9 @@ Result<Socket> StandardNetwork::CreateSocket(
     SocketType type) const
 {
     Socket sock = ::socket(
-            GetAddressFamily(family),
-            GetSocketType(type),
-            GetSocketProtocol(proto));
+        Internal::GetAddressFamily(family),
+        Internal::GetSocketType(type),
+        Internal::GetSocketProtocol(proto));
 
     if (!sock)
     {

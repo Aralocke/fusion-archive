@@ -504,6 +504,7 @@ int32_t Internal::GetSocketOptLevel(SocketOpt option)
         int32_t(IPPROTO_TCP),  // TcpKeepIdle
         int32_t(IPPROTO_TCP),  // TcpKeepInterval
         int32_t(IPPROTO_IP),   // TimeToLive
+        int32_t(SOL_SOCKET),   // Type
     };
 
     return s_socketLevels[size_t(option)];
@@ -548,6 +549,7 @@ int32_t Internal::GetSocketOpt(SocketOpt option)
 #endif
         int32_t(TCP_KEEPINTVL),      // TcpKeepInterval
         int32_t(IP_TTL),             // TimeToLive
+        int32_t(SO_TYPE),            // Type
     };
 
     return s_socketOptions[size_t(option)];
@@ -582,6 +584,7 @@ std::string_view ToString(SocketOpt option)
         "TCP_KEEPIDLE"sv,       // TcpKeepIdle
         "TCP_KEEPINTVL"sv,      // TcpKeepInterval
         "IP_TTL"sv,             // TimeToLive
+        "SO_TYPE"sv,            // Type
     };
 
     return s_optStrings[size_t(option)];
@@ -609,11 +612,11 @@ int32_t Internal::GetSocketProtocol(SocketProtocol protocol)
 {
     static const int32_t s_socketProtocols[] = {
         int32_t(IPPROTO_NONE),
-        int32_t(IPPROTO_TCP),
-        int32_t(IPPROTO_UDP),
         int32_t(IPPROTO_ICMP),
         int32_t(IPPROTO_IP),
         int32_t(IPPROTO_RAW),
+        int32_t(IPPROTO_TCP),
+        int32_t(IPPROTO_UDP),
     };
 
     return s_socketProtocols[static_cast<size_t>(protocol)];
@@ -1566,6 +1569,23 @@ Result<std::unique_ptr<Network>> Network::Create()
 Result<Socket> Network::CreateSocket(SocketConfig config) const
 {
     return CreateSocket(config.family, config.protocol, config.type);
+}
+
+Result<SocketType> Network::GetSocketType(Socket sock) const
+{
+    int32_t type = 0;
+    Result<void> result = GetSocketOption(
+        sock,
+        SocketOptions::Type(&type));
+
+    if (!result)
+    {
+        return result.Error()
+            .WithContext("failed to query socket option 'SO_TYPE' for '{}",
+                sock);
+    }
+
+    return Internal::GetSocketType(type);
 }
 
 Result<size_t> Network::Recv(

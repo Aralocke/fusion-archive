@@ -137,10 +137,13 @@ Result<Socket> StandardNetwork::CreateSocket(
     SocketProtocol proto,
     SocketType type) const
 {
-    Socket sock = ::socket(
-        GetAddressFamily(family),
-        GetSocketType(type),
-        GetSocketProtocol(proto));
+    Socket sock = WSASocketW(
+        Internal::GetAddressFamily(family),
+        Internal::GetSocketType(type),
+        Internal::GetSocketProtocol(proto),
+        nullptr,
+        0,
+        0);
 
     if (!sock)
     {

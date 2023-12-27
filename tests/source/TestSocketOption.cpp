@@ -18,6 +18,8 @@
 
 #include <Fusion/Internal/Network.h>
 
+#include <Fusion/Memory.h>
+
 namespace Fusion
 {
 class SocketOptionTests : public ::testing::Test
@@ -166,4 +168,37 @@ TEST_F(SocketOptionTests, ReuseAddress)
         sock,
         ReuseAddress(&reuse)));
     ASSERT_TRUE(reuse);
+}
+
+TEST_F(SocketOptionTests, SocketType)
+{
+    using namespace SocketOptions;
+
+    Socket stream{ INVALID_SOCKET };
+    FUSION_ASSERT_RESULT(network->CreateSocket(TCPv4),
+        [&](Socket s) {
+            ASSERT_TRUE(s != INVALID_SOCKET);
+            stream = s;
+        });
+
+    FUSION_SCOPE_GUARD([&] { network->Close(stream); });
+
+    FUSION_ASSERT_RESULT(network->GetSocketType(stream),
+        [&](SocketType type) {
+            ASSERT_EQ(type, SocketType::Stream);
+        });
+
+    Socket datagram{ INVALID_SOCKET };
+    FUSION_ASSERT_RESULT(network->CreateSocket(UDPv4),
+        [&](Socket s) {
+            ASSERT_TRUE(s != INVALID_SOCKET);
+            datagram = s;
+        });
+
+    FUSION_SCOPE_GUARD([&] { network->Close(datagram); });
+
+    FUSION_ASSERT_RESULT(network->GetSocketType(datagram),
+        [&](SocketType type) {
+            ASSERT_EQ(type, SocketType::Datagram);
+        });
 }
