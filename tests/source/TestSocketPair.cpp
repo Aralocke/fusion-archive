@@ -48,12 +48,12 @@ public:
     {
         if (pair)
         {
-            pair->Stop();
+            pair->Stop().wait();
             pair.reset();
         }
         if (network)
         {
-            network->Stop();
+            network->Stop().wait();
         }
     }
 };

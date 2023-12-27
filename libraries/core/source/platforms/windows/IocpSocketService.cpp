@@ -62,19 +62,13 @@ Result<void> IocpSocketService::Start()
     return Failure{ E_NOT_IMPLEMENTED };
 }
 
-void IocpSocketService::Stop()
+std::future<Result<void>> IocpSocketService::Stop()
 {
-    Stop(nullptr);
-}
+    std::promise<Result<void>> promise;
+    std::future<Result<void>> future = promise.get_future();
 
-void IocpSocketService::Stop(std::function<void(Failure&)> fn)
-{
-    if (fn)
-    {
-        Failure f(E_SUCCESS);
-
-        fn(f);
-    }
+    promise.set_value(Success);
+    return future;
 }
 }  // namespace Fusion::Internal
 #endif  // FUSION_PLATFORM_WINDOWS

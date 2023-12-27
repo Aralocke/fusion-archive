@@ -1773,13 +1773,11 @@ Result<void> SocketPair::Start(Type blocking)
     return Success;
 }
 
-void SocketPair::Stop()
+std::future<Result<void>> SocketPair::Stop()
 {
-    Stop(nullptr);
-}
+    std::promise<Result<void>> promise;
+    std::future<Result<void>> future = promise.get_future();
 
-void SocketPair::Stop(std::function<void(Failure&)> fn)
-{
     if (Socket& reader = m_sockets[0]; reader != INVALID_SOCKET)
     {
         m_network.Close(reader);
@@ -1790,12 +1788,9 @@ void SocketPair::Stop(std::function<void(Failure&)> fn)
         m_network.Close(writer);
         writer = INVALID_SOCKET;
     }
-    if (fn)
-    {
-        Failure f(E_SUCCESS);
 
-        fn(f);
-    }
+    promise.set_value(Success);
+    return future;
 }
 
 Socket SocketPair::Writer() const
@@ -1897,6 +1892,8 @@ SocketService::SocketService(Type type, Operation op)
     : m_type(type)
     , m_operation(op)
 { }
+
+SocketService::~SocketService() = default;
 
 Result<std::span<SocketEvent>> SocketService::Execute()
 {

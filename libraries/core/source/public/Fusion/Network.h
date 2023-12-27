@@ -25,6 +25,7 @@
 #include <array>
 #include <iosfwd>
 #include <functional>
+#include <future>
 #include <span>
 #include <string_view>
 #include <variant>
@@ -1461,12 +1462,7 @@ public:
     //
     //
     //
-    virtual void Stop() = 0;
-
-    //
-    //
-    //
-    virtual void Stop(std::function<void(Failure&)> fn) = 0;
+    virtual std::future<Result<void>> Stop() = 0;
 };
 
 //
@@ -1520,12 +1516,7 @@ public:
     //
     //
     //
-    void Stop();
-
-    //
-    //
-    //
-    void Stop(std::function<void(Failure&)> fn);
+    std::future<Result<void>> Stop();
 
     //
     //
@@ -1617,7 +1608,7 @@ public:
     //
     //
     //
-    virtual ~SocketService() = default;
+    virtual ~SocketService();
 
     //
     //
@@ -1663,6 +1654,7 @@ public:
         Socket sock,
         SocketOperation events) = 0;
 
+public:
     //
     //
     //
@@ -1671,12 +1663,7 @@ public:
     //
     //
     //
-    virtual void Stop() = 0;
-
-    //
-    //
-    //
-    virtual void Stop(std::function<void(Failure&)> fn) = 0;
+    virtual std::future<Result<void>> Stop() = 0;
 
 protected:
     SocketService(Type type, Operation op);

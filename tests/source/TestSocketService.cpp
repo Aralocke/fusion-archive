@@ -153,17 +153,17 @@ void SocketServiceTests::TearDown()
     if (pair)
     {
         FUSION_ASSERT_RESULT(pair->Drain());
-        pair->Stop();
+        pair->Stop().wait();
         pair.reset();
     }
     if (service)
     {
-        service->Stop();
+        service->Stop().wait();
         service.reset();
     }
     if (network)
     {
-        network->Stop();
+        network->Stop().wait();
         network.reset();
     }
     EXPECT_FALSE(network);

@@ -64,12 +64,13 @@ Result<void> KQueueSocketService::Start()
     return Failure{ E_NOT_IMPLEMENTED };
 }
 
-void KQueueSocketService::Stop()
+std::future<Result<void>> KQueueSocketService::Stop()
 {
-    Stop(nullptr);
-}
+    std::promise<Result<void>> promise;
+    std::future<Result<void>> future = promise.get_future();
 
-void KQueueSocketService::Stop(std::function<void(Failure&)> fn)
-{}
+    promise.set_value(Success);
+    return future;
+}
 }  // namespace Fusion::Internal
 #endif  // FUSION_PLATFORM_APPLE

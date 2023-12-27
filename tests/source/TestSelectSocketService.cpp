@@ -16,7 +16,7 @@
 
 #include <Fusion/Fixtures/SocketService.h>
 
-TEST_F(SocketServiceTests, SelectStartupSHutdown)
+TEST_F(SocketServiceTests, SelectStartupShutdown)
 {
     FUSION_ASSERT_RESULT(
         SocketService::Create(

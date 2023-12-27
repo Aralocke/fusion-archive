@@ -71,12 +71,7 @@ public:
     //
     //
     //
-    void Stop() override;
-
-    //
-    //
-    //
-    void Stop(std::function<void(Failure&)> fn) override;
+    std::future<Result<void>> Stop() override;
 
 private:
     //

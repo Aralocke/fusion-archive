@@ -450,38 +450,30 @@ Result<void> EPollSocketService::Start()
     return Success;
 }
 
-void EPollSocketService::Stop()
-{
-    Stop(nullptr);
-}
-
 void EPollSocketService::Stop(std::function<void(Failure&)> fn)
 {
     std::unique_lock lock(m_mutex);
 
-    if (m_shutdown)
+    std::promise<Result<void>> promise;
+    std::future<Result<void>> future = promise.get_future();
+
+    if (!m_shutdown)
     {
-        return;
+        m_shutdown = true;
+        m_pipe.Stop();
+        m_events.clear();
+        m_results.clear();
+
+        if (auto res = ::close(m_poll); res == SOCKET_ERROR)
+        {
+            const auto f = Failure::Errno();
+            promise.set_value(std::move(f));
+            return future;
+        }
     }
 
-    m_shutdown = true;
-    m_pipe.Stop();
-    m_events.clear();
-    m_results.clear();
-
-    if (auto res = ::close(m_poll); res == SOCKET_ERROR)
-    {
-        const auto f = Failure::Errno();
-        FUSION_UNUSED(f);
-    }
-
-    lock.unlock();
-    if (fn)
-    {
-        Failure f(E_SUCCESS);
-
-        fn(f);
-    }
+    promise.set_value(Success);
+    return future;
 }
 }  // namespace Fusion::Internal
 #endif  // FUSION_PLATFORM_POSIX

@@ -27,18 +27,12 @@ Result<void> StandardNetwork::Start()
     return Success;
 }
 
-void StandardNetwork::Stop()
+std::future<Result<void>> StandardNetwork::Stop()
 {
-    Stop(nullptr);
-}
+    std::promise<Result<void>> promise;
+    std::future<Result<void>> future = promise.get_future();
 
-void StandardNetwork::Stop(std::function<void(Failure&)> fn)
-{
-    if (fn)
-    {
-        Failure f(E_SUCCESS);
-
-        fn(f);
-    }
+    promise.set_value(Success);
+    return future;
 }
 }

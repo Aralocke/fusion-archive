@@ -344,44 +344,30 @@ Result<void> SelectSocketService::Start()
     return Success;
 }
 
-void SelectSocketService::Stop()
-{
-    Stop([&](Failure& result) {
-        std::lock_guard l(m_mutex);
-        FUSION_UNUSED(result);
-        FUSION_ASSERT(m_shutdown);
-        FUSION_ASSERT(m_events.empty());
-    });
-}
-
-void SelectSocketService::Stop(std::function<void(Failure&)> fn)
+std::future<Result<void>> SelectSocketService::Stop()
 {
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    if (m_shutdown)
+    std::promise<Result<void>> promise;
+    std::future<Result<void>> future = promise.get_future();
+
+    if (!m_shutdown)
     {
-        return;
+        m_shutdown = true;
+        m_events.clear();
+        m_results.clear();
+
+        NotifyLocked(lock);
+
+        if (m_polling)
+        {
+            while (m_polling) m_cond.wait(lock);
+        }
+
+        m_pipe.Stop();
     }
 
-    m_shutdown = true;
-    m_events.clear();
-    m_results.clear();
-
-    NotifyLocked(lock);
-
-    if (m_polling)
-    {
-        while (m_polling) m_cond.wait(lock);
-    }
-
-    m_pipe.Stop();
-
-    lock.unlock();
-    if (fn)
-    {
-        Failure f(E_SUCCESS);
-
-        fn(f);
-    }
+    promise.set_value(Success);
+    return future;
 }
 }  // namespace Fusion::Internal
