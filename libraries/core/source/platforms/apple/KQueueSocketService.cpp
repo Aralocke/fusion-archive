@@ -19,7 +19,7 @@
 #if FUSION_PLATFORM_APPLE
 namespace Fusion::Internal
 {
-KQueueSocketService::KQueueSocketService(Network& network)
+KQueueSocketService::KQueueSocketService(Params, Network& network)
     : SocketService(Type::Kqueue, Operation::Polling)
     , m_network(network)
     , m_pipe(network)

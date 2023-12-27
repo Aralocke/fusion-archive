@@ -1592,16 +1592,43 @@ public:
     };
 
 public:
+    struct Params
+    {
+        // Define the type of SocketService that should be created by the factory.
+        // By default the best suited variant will be selected per-platform.
+        Type type{ Type::Default };
+
+        // Maximum number of completion calls to deque from a completion based
+        // SocketService.
+        //
+        // This value has no effect on Polling based SocketServices. 
+        uint32_t batchSize{ 8 };
+
+        // Number of threads to use for completion based SocketServices. If this
+        // value is zero then it will default to the number of CPUs or maxThreads,
+        // whichever is smaller.
+        //
+        // This value has no effect on Polling based SocketServices.
+        uint8_t threads{ 1 };
+
+        // Maximum number of threads to use for completion based SocketServices.
+        //
+        // This value has no effect on Polling based SocketServices.
+        uint8_t maxThreads{ UINT8_MAX };
+    };
+
+public:
     //
     //
     //
-    static Result<std::unique_ptr<SocketService>> Create(Network& net);
+    static Result<std::unique_ptr<SocketService>> Create(
+        Network& net);
 
     //
     //
     //
     static Result<std::unique_ptr<SocketService>> Create(
-        Type type,
+        Params params,
         Network& net);
 
 public:

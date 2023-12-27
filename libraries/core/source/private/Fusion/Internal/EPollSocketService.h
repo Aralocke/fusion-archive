@@ -34,7 +34,10 @@ class EPollSocketService final
     : public SocketService
 {
 public:
-    EPollSocketService(Network& network);
+    EPollSocketService(
+        Params params,
+        Network& network);
+
     ~EPollSocketService() override;
 
 public:

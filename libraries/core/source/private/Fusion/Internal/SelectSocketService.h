@@ -30,7 +30,10 @@ class SelectSocketService final
     : public SocketService
 {
 public:
-    SelectSocketService(Network& network);
+    SelectSocketService(
+        Params params,
+        Network& network);
+
     ~SelectSocketService() override;
 
 public:

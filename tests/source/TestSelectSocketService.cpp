@@ -20,7 +20,9 @@ TEST_F(SocketServiceTests, SelectStartupShutdown)
 {
     FUSION_ASSERT_RESULT(
         SocketService::Create(
-            SocketService::Type::Select,
+            SocketService::Params{
+                .type = SocketService::Type::Select,
+            },
             *network),
         [&](std::unique_ptr<SocketService> s) {
             service = std::move(s);

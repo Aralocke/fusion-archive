@@ -30,7 +30,10 @@ class IocpSocketService final
     : public SocketService
 {
 public:
-    IocpSocketService(Network& network);
+    IocpSocketService(
+        Params params,
+        Network& network);
+
     ~IocpSocketService() override;
 
 public:

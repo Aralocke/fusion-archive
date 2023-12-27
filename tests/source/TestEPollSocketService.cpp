@@ -20,10 +20,15 @@
 
 TEST_F(SocketServiceTests, EPollStartupShutdown)
 {
-#if FUSION_PLATFORM_LINUX
+#if !FUSION_PLATFORM_LINUX
+    GTEST_SKIP() << "Skipping EPoll tests on non-Linux";
+#endif
+
     FUSION_ASSERT_RESULT(
         SocketService::Create(
-            SocketService::Type::Epoll,
+            SocketService::Params{
+                .type = SocketService::Type::Epoll,
+            },
             *network),
         [&](std::unique_ptr<SocketService> s) {
             service = std::move(s);
@@ -80,5 +85,4 @@ TEST_F(SocketServiceTests, EPollStartupShutdown)
         Consume(one, data, message.size());
         ASSERT_EQ(data, message);
     }
-#endif  // FUSION_PLATFORM_LINUX
 }

@@ -30,7 +30,10 @@ class KQueueSocketService final
     : public SocketService
 {
 public:
-    KQueueSocketService(Network& network);
+    KQueueSocketService(
+        Params params,
+        Network& network);
+
     ~KQueueSocketService() override;
 
 public:

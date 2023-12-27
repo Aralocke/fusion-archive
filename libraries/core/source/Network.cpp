@@ -1829,24 +1829,26 @@ bool SocketEvent::operator<(const Socket& s) const
 Result<std::unique_ptr<SocketService>> SocketService::Create(
     Network& network)
 {
-    return Create(Type::Default, network);
+    return Create(Params{}, network);
 }
 
 Result<std::unique_ptr<SocketService>> SocketService::Create(
-    Type type,
+    Params params,
     Network& network)
 {
     using namespace Fusion::Internal;
 
     std::unique_ptr<SocketService> service;
 
-    switch (type)
+    switch (params.type)
     {
 #if FUSION_PLATFORM_WINDOWS
     case Type::Default:
     case Type::Iocp:
     {
-        service = std::make_unique<IocpSocketService>(network);
+        service = std::make_unique<IocpSocketService>(
+            std::move(params),
+            network);
         break;
     }
 #else
@@ -1857,7 +1859,9 @@ Result<std::unique_ptr<SocketService>> SocketService::Create(
     case Type::Default:
     case Type::Epoll:
     {
-        service = std::make_unique<EPollSocketService>(network);
+        service = std::make_unique<EPollSocketService>(
+            std::move(params),
+            network);
         break;
     }
 #else
@@ -1867,14 +1871,19 @@ Result<std::unique_ptr<SocketService>> SocketService::Create(
 #if FUSION_PLATFORM_APPLE
     case Type::Default:
     case Type::Kqueue:
-        return std::make_unique<KQueueSocketService>(network);
+        service = std::make_unique<KQueueSocketService>(
+            std::move(params),
+            network);
+        break;
 #else
     case Type::Kqueue:
         return Failure{ E_NOT_SUPPORTED };
 #endif
     default:
     {
-        service = std::make_unique<SelectSocketService>(network);
+        service = std::make_unique<SelectSocketService>(
+            std::move(params),
+            network);
         break;
     }
     }

@@ -20,6 +20,9 @@
 namespace Fusion::Internal
 {
 IocpSocketService::IocpSocketService(Network& network)
+IocpSocketService::IocpSocketService(
+    Params params,
+    Network& network)
     : SocketService(Type::Iocp, Operation::Completion)
     , m_network(network)
     , m_pipe(network)
