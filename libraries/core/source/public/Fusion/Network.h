@@ -1594,6 +1594,13 @@ public:
         Kqueue,
     };
 
+    enum class Operation : uint8_t
+    {
+        Polling = 0,
+        Completion,
+    };
+
+public:
     //
     //
     //
@@ -1623,6 +1630,16 @@ public:
     //
     //
     virtual Result<void> Close(Socket sock) = 0;
+
+    //
+    //
+    //
+    Operation GetOperation() const;
+
+    //
+    //
+    //
+    Type GetType() const;
 
     //
     //
@@ -1662,7 +1679,11 @@ public:
     virtual void Stop(std::function<void(Failure&)> fn) = 0;
 
 protected:
-    SocketService() = default;
+    SocketService(Type type, Operation op);
+
+private:
+    Type m_type;
+    Operation m_operation;
 };
 
 }  // namespace Fusion

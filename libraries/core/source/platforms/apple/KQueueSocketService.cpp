@@ -20,7 +20,8 @@
 namespace Fusion::Internal
 {
 KQueueSocketService::KQueueSocketService(Network& network)
-    : m_network(network)
+    : SocketService(Type::Kqueue, Operation::Polling)
+    , m_network(network)
     , m_pipe(network)
 { }
 

@@ -1893,9 +1893,24 @@ Result<std::unique_ptr<SocketService>> SocketService::Create(
     return service;
 }
 
+SocketService::SocketService(Type type, Operation op)
+    : m_type(type)
+    , m_operation(op)
+{ }
+
 Result<std::span<SocketEvent>> SocketService::Execute()
 {
     return Execute(std::chrono::seconds(-1));
+}
+
+SocketService::Operation SocketService::GetOperation() const
+{
+    return m_operation;
+}
+
+SocketService::Type SocketService::GetType() const
+{
+    return m_type;
 }
 // SocketService                                             END
 // -------------------------------------------------------------

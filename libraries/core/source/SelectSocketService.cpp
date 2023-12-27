@@ -19,7 +19,8 @@
 namespace Fusion::Internal
 {
 SelectSocketService::SelectSocketService(Network& network)
-    : m_network(network)
+    : SocketService(Type::Select, Operation::Polling)
+    , m_network(network)
     , m_pipe(network)
 { }
 

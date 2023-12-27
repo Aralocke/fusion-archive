@@ -63,7 +63,8 @@ static uint32_t ToEPollEvents(SocketOperation events)
 }
 
 EPollSocketService::EPollSocketService(Network& network)
-    : m_network(network)
+    : SocketService(Type::Epoll, Operation::Polling)
+    , m_network(network)
     , m_pipe(network)
 { }
 
