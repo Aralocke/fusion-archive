@@ -1573,10 +1573,9 @@ Result<Socket> Network::CreateSocket(SocketConfig config) const
 
 Result<SocketType> Network::GetSocketType(Socket sock) const
 {
-    int32_t type = 0;
-    Result<void> result = GetSocketOption(
-        sock,
-        SocketOptions::Type(&type));
+    using namespace SocketOptions;
+
+    Result<int32_t> result = GetSocketOption<Type>(sock);
 
     if (!result)
     {
@@ -1585,7 +1584,7 @@ Result<SocketType> Network::GetSocketType(Socket sock) const
                 sock);
     }
 
-    return Internal::GetSocketType(type);
+    return Internal::GetSocketType(*result);
 }
 
 Result<size_t> Network::Recv(

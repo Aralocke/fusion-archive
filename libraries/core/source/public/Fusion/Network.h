@@ -1049,17 +1049,16 @@ template<SocketOpt opt, typename T>
 class SocketOption final
 {
 public:
+    template<typename T> struct StorageType;
+    template<> struct StorageType<bool> { typedef int32_t Type; };
+    template<typename T> struct StorageType { typedef T Type; };
+
+public:
+    typedef T Type;
+    
+public:
+    static const size_t size = sizeof(Type);
     static const SocketOpt option = opt;
-
-    explicit SocketOption(T* ptr);
-    explicit SocketOption(T value);
-
-public:
-    T* value{ nullptr };
-    size_t size{ 0 };
-
-public:
-    T data{ };
 };
 
 //
@@ -1293,39 +1292,13 @@ public:
         Socket sock,
         SocketOpt option,
         void* data,
-        size_t size) const = 0;
+        size_t& size) const = 0;
 
     //
     //
     //
-    template<SocketOpt opt>
-    Result<void> GetSocketOption(
-        Socket sock,
-        SocketOption<opt, bool> option) const;
-
-    //
-    //
-    //
-    template<SocketOpt opt>
-    Result<void> GetSocketOption(
-        Socket sock,
-        SocketOption<opt, int32_t> option) const;
-
-    //
-    //
-    //
-    template<SocketOpt opt>
-    Result<void> GetSocketOption(
-        Socket sock,
-        SocketOption<opt, Clock::duration> option) const;
-
-    //
-    //
-    //
-    template<SocketOpt opt>
-    Result<void> GetSocketOption(
-        Socket sock,
-        SocketOption<opt, MulticastGroup> option) const;
+    template<typename SockOption>
+    Result<typename SockOption::Type> GetSocketOption(Socket sock) const;
 
     //
     //
@@ -1428,34 +1401,10 @@ public:
     //
     //
     //
-    template<SocketOpt opt>
+    template<typename SockOption>
     Result<void> SetSocketOption(
         Socket sock,
-        SocketOption<opt, bool> option);
-
-    //
-    //
-    //
-    template<SocketOpt opt>
-    Result<void> SetSocketOption(
-        Socket sock,
-        SocketOption<opt, int32_t> option);
-
-    //
-    //
-    //
-    template<SocketOpt opt>
-    Result<void> SetSocketOption(
-        Socket sock,
-        SocketOption<opt, Clock::duration> option);
-
-    //
-    //
-    //
-    template<SocketOpt opt>
-    Result<void> SetSocketOption(
-        Socket sock,
-        SocketOption<opt, MulticastGroup> option);
+        typename SockOption::Type value) const;
 
     //
     //

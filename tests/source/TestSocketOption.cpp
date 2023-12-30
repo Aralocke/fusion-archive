@@ -29,28 +29,68 @@ public:
     Socket sock;
 
 public:
-    static bool GetSockOpt(
-        Socket s,
+    template<typename T>
+    bool SystemGetSockOpt(
+        Socket sock,
         SocketOpt option,
-        void* data,
-        size_t& size)
+        T& data)
     {
-        using namespace Fusion::Internal;
+        constexpr size_t kDataSize = sizeof(T);
 
 #if FUSION_PLATFORM_WINDOWS
-        int optlen = static_cast<int>(size);
+        int optlen = static_cast<int>(sizeof(T));
 #elif FUSION_PLATFORM_POSIX
-        auto optlen = static_cast<socklen_t>(size);
+        socklen_t optlen = static_cast<socklen_t>(sizeof(T));
 #endif
 
         int32_t res = ::getsockopt(
-            s,
-            GetSocketOptLevel(option),
-            GetSocketOpt(option),
-            reinterpret_cast<char*>(data),
+            sock,
+            Internal::GetSocketOptLevel(option),
+            Internal::GetSocketOpt(option),
+            reinterpret_cast<char*>(&data),
             &optlen);
 
-        return res != SOCKET_ERROR;
+        if (res != 0)
+        {
+            Failure err = Failure::Errno();
+            const int32_t code = err.Error().platformCode;
+
+            fmt::println("getsockopt(): failed '{}': {}",
+                code, err.Code());
+
+            return false;
+        }
+
+        if (size_t(optlen) != kDataSize)
+        {
+            fmt::println("Invalid value size of '{}' (expected: '{}') for option '{}'",
+                kDataSize,
+                size_t(optlen),
+                option);
+
+            return false;
+        }
+        return true;
+    }
+
+    template<typename T>
+    bool SystemSetSockOpt(
+        Socket sock,
+        SocketOpt option,
+        T data)
+    {
+#if FUSION_PLATFORM_WINDOWS
+        int32_t optlen = static_cast<int32_t>(sizeof(T));
+#elif FUSION_PLATFORM_POSIX
+        socklen_t optlen = static_cast<socklen_t>(sizeof(T));
+#endif
+
+        return ::setsockopt(
+            sock,
+            Internal::GetSocketOptLevel(option),
+            Internal::GetSocketOpt(option),
+            reinterpret_cast<const char*>(&data),
+            optlen) == 0;
     }
 
 public:
@@ -91,40 +131,36 @@ TEST_F(SocketOptionTests, Recvbuf)
 {
     using namespace SocketOptions;
 
-    constexpr int32_t RECV_BUF_SIZE = 16 * 1024;
+    constexpr int32_t kBufferSize = 16 * 1024;
 
     int32_t nativeValue = 0;
-    int32_t libValue = 0;
 
     {
         nativeValue = 0;
-        size_t optlen = sizeof(int);
 
-        ASSERT_TRUE(GetSockOpt(
+        ASSERT_TRUE(SystemGetSockOpt(
             sock,
             SocketOpt::RecvBuf,
-            &nativeValue,
-            optlen));
+            nativeValue));
         ASSERT_TRUE(nativeValue > 0);
     }
 
-    libValue = 0;
-    FUSION_ASSERT_RESULT(network->GetSocketOption(
-        sock,
-        RecvBuf(&libValue)));
-    ASSERT_EQ(libValue, nativeValue);
-    FUSION_ASSERT_RESULT(network->SetSocketOption(
-        sock, RecvBuf(RECV_BUF_SIZE)));
+    FUSION_ASSERT_RESULT(
+        network->GetSocketOption<RecvBuf>(sock),
+        [&](int32_t value) {
+            ASSERT_EQ(value, nativeValue);
+        });
+    
+    FUSION_ASSERT_RESULT(
+        network->SetSocketOption<RecvBuf>(sock, kBufferSize));
 
     {
         nativeValue = 0;
-        size_t optlen = sizeof(int);
 
-        ASSERT_TRUE(GetSockOpt(
+        ASSERT_TRUE(SystemGetSockOpt(
             sock,
             SocketOpt::RecvBuf,
-            &nativeValue,
-            optlen));
+            nativeValue));
         ASSERT_TRUE(nativeValue > 0);
     }
 
@@ -132,48 +168,42 @@ TEST_F(SocketOptionTests, Recvbuf)
     // On linux the kernel will double the size set for internal
     // book-keeping on the buffer. We adjust our math to ensure
     // that the test passes.
-    ASSERT_EQ(nativeValue, RECV_BUF_SIZE * 2);
+    constexpr size_t kExpectedRecvSize = kBufferSize * 2;
 #else
-    ASSERT_EQ(nativeValue, RECV_BUF_SIZE);
+    constexpr size_t kExpectedRecvSize = kBufferSize;
 #endif  // FUSION_PLATFORM_POSIX
 
-    libValue = 0;
-    FUSION_ASSERT_RESULT(network->GetSocketOption(
-        sock,
-        RecvBuf(&libValue)));
+    ASSERT_EQ(nativeValue, kExpectedRecvSize);
 
-#if FUSION_PLATFORM_POSIX
-    // On linux the kernel will double the size set for internal
-    // book-keeping on the buffer. We adjust our math to ensure
-    // that the test passes.
-    ASSERT_EQ(libValue, RECV_BUF_SIZE * 2);
-#else
-    ASSERT_EQ(libValue, RECV_BUF_SIZE);
-#endif  // FUSION_PLATFORM_POSIX
+    FUSION_ASSERT_RESULT(
+        network->GetSocketOption<RecvBuf>(sock),
+        [&](int32_t value) {
+            ASSERT_EQ(value, kExpectedRecvSize);
+        });
 }
 
 TEST_F(SocketOptionTests, ReuseAddress)
 {
     using namespace SocketOptions;
 
-    bool reuse = false;
-    FUSION_ASSERT_RESULT(network->GetSocketOption(
-        sock, ReuseAddress(&reuse)));
-    ASSERT_FALSE(reuse);
+    FUSION_ASSERT_RESULT(
+        network->GetSocketOption<ReuseAddress>(sock),
+        [](bool reuse) {
+            ASSERT_FALSE(reuse);
+        });
 
-    FUSION_ASSERT_RESULT(network->SetSocketOption(
-        sock,
-        ReuseAddress(true)));
-    FUSION_ASSERT_RESULT(network->GetSocketOption(
-        sock,
-        ReuseAddress(&reuse)));
-    ASSERT_TRUE(reuse);
+    FUSION_ASSERT_RESULT(
+        network->SetSocketOption<ReuseAddress>(sock, true));
+
+    FUSION_ASSERT_RESULT(
+        network->GetSocketOption<ReuseAddress>(sock),
+        [](bool reuse) {
+            ASSERT_TRUE(reuse);
+        });
 }
 
-TEST_F(SocketOptionTests, SocketType)
+TEST_F(SocketOptionTests, CheckSocketType)
 {
-    using namespace SocketOptions;
-
     Socket stream{ INVALID_SOCKET };
     FUSION_ASSERT_RESULT(network->CreateSocket(TCPv4),
         [&](Socket s) {
@@ -201,4 +231,80 @@ TEST_F(SocketOptionTests, SocketType)
         [&](SocketType type) {
             ASSERT_EQ(type, SocketType::Datagram);
         });
+}
+
+TEST_F(SocketOptionTests, EnsureNagleDisabled)
+{
+    using namespace SocketOptions;
+
+    ASSERT_TRUE(sock != INVALID_SOCKET);
+
+    // SOCK_STREAM sockets created by the StandardNetwork will set
+    // Nagle's to false on creation. We expect TcpNoDelay to be set
+    // to true here.
+
+    bool noDelay = false;
+
+    ASSERT_TRUE(SystemGetSockOpt(
+        sock,
+        SocketOpt::TcpNoDelay,
+        noDelay));
+    ASSERT_TRUE(noDelay);
+
+    FUSION_ASSERT_RESULT(
+        network->GetSocketOption<TcpNoDelay>(sock),
+        [](bool value) {
+            ASSERT_TRUE(value);
+        });
+}
+
+TEST_F(SocketOptionTests, GetSetNagleValue)
+{
+    using namespace SocketOptions;
+
+    Socket newSock = WSASocketW(
+        AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, 0);
+    ASSERT_TRUE(newSock != INVALID_SOCKET);
+
+    FUSION_SCOPE_GUARD([&] { network->Close(newSock); });
+
+    {
+        // Check the bool type
+
+        bool nagleCheckBool = true;
+        ASSERT_TRUE(SystemGetSockOpt(
+            newSock,
+            SocketOpt::TcpNoDelay,
+            nagleCheckBool));
+        ASSERT_FALSE(nagleCheckBool);
+    }
+
+    {
+        // Check Network Bool Type
+
+        FUSION_ASSERT_RESULT(
+            network->GetSocketOption<TcpNoDelay>(newSock),
+            [](bool result) {
+                ASSERT_FALSE(result);
+            });
+    }
+
+    {
+        // Disable Nagle's Algorithm
+
+        FUSION_ASSERT_RESULT(
+            network->SetSocketOption<TcpNoDelay>(
+            newSock,
+            true));
+    }
+
+    {
+        // Check Network Bool Type
+
+        FUSION_ASSERT_RESULT(
+            network->GetSocketOption<TcpNoDelay>(newSock),
+            [](bool result) {
+                ASSERT_TRUE(result);
+            });
+    }
 }

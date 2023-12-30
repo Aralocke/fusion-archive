@@ -211,7 +211,7 @@ Result<void> StandardNetwork::GetSocketOption(
     Socket sock,
     SocketOpt option,
     void* output,
-    size_t size) const
+    size_t& size) const
 {
     if (sock == INVALID_SOCKET)
     {

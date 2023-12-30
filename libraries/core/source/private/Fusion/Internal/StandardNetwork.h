@@ -83,7 +83,7 @@ public:
         Socket sock,
         SocketOpt option,
         void* data,
-        size_t size) const override;
+        size_t& size) const override;
 
     //
     //

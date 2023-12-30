@@ -120,153 +120,118 @@ std::string_view ToString(
     return ToString(address, buffer, LENGTH);
 }
 
-template<SocketOpt opt, typename T>
-SocketOption<opt, T>::SocketOption(T* out)
-    : value(out)
-    , size(sizeof(T))
-{ }
-
-template<SocketOpt opt, typename T>
-SocketOption<opt, T>::SocketOption(T value)
-    : size(sizeof(T))
-    , data(value)
-{ }
-
-template<SocketOpt opt>
-Result<void> Network::GetSocketOption(
-    Socket sock,
-    SocketOption<opt, bool> option) const
+template<typename SockOption>
+Result<typename SockOption::Type>
+Network::GetSocketOption(Socket sock) const
 {
+    using Type = typename SockOption::Type;
+
     if (sock == INVALID_SOCKET)
     {
         return Failure(E_INVALID_ARGUMENT);
     }
 
-    int32_t value{ 0 };
-    if (auto result = GetSocketOption(
-        sock,
-        option.option,
-        &value,
-        sizeof(value)); !result)
+    if constexpr (std::is_same_v<Type, bool>)
     {
-        return result.Error();
+        // Ensure that the data storage for <bool> meets expectations
+
+        Type optionData = {};
+        size_t optionSize = SockOption::size;
+
+        if (Result<void> result = GetSocketOption(
+            sock,
+            SockOption::option,
+            &optionData,
+            optionSize); !result)
+        {
+            return result.Error();
+        }
+
+        return bool(optionData == 1);
+    }
+    else if constexpr (std::is_same_v<Type, int32_t>)
+    {
+        static const size_t kDataSize = sizeof(Type);
+
+        Type optionData = {};
+        size_t optionSize = SockOption::size;
+
+        if (Result<void> result = GetSocketOption(
+            sock,
+            SockOption::option,
+            &optionData,
+            optionSize); !result)
+        {
+            return result.Error();
+        }
+
+        FUSION_ASSERT(optionSize == kDataSize,
+            "System expected a different data type that int32");
+
+        return optionData;
+    }
+    else if constexpr (std::is_same_v<Type, Clock::duration>)
+    {
+        // Not Implemented
+    }
+    else if constexpr (std::is_same_v<Type, MulticastGroup>)
+    {
+        // Not Implemented
     }
 
-    *option.value = bool(value != 0);
-    option.size = sizeof(bool);
-
-    return Success;
+    return Failure(E_NOT_SUPPORTED);
 }
 
-template<SocketOpt opt>
-Result<void> Network::GetSocketOption(
+template<typename SockOption>
+Result<void> Network::SetSocketOption(
     Socket sock,
-    SocketOption<opt, int32_t> option) const
+    typename SockOption::Type value) const
 {
+    using Type = typename SockOption::Type;
+
     if (sock == INVALID_SOCKET)
     {
         return Failure(E_INVALID_ARGUMENT);
     }
 
-    if (auto result = GetSocketOption(
-        sock,
-        option.option,
-        option.value,
-        option.size); !result)
+    if constexpr (std::is_same_v<bool, Type>)
     {
-        return result.Error();
+        int32_t option = (value) ? 1 : 0;
+
+        if (Result<void> result = SetSocketOption(
+            sock,
+            SockOption::option,
+            &value,
+            SockOption::size); !result)
+        {
+            return result.Error();
+        }
+
+        return Success;
+    }
+    else if constexpr (std::is_same_v<int32_t, Type>)
+    {
+        if (Result<void> result = SetSocketOption(
+            sock,
+            SockOption::option,
+            &value,
+            SockOption::size); !result)
+        {
+            return result.Error();
+        }
+
+        return Success;
+    }
+    else if constexpr (std::is_same_v<Type, Clock::duration>)
+    {
+        // Not Implemented
+    }
+    else if constexpr (std::is_same_v<Type, MulticastGroup>)
+    {
+        // Not Implemented
     }
 
-    return Success;
-}
-
-template<SocketOpt opt>
-Result<void> Network::GetSocketOption(
-    Socket sock,
-    SocketOption<opt, Clock::duration> option) const
-{
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
-
-    return Failure{ E_NOT_IMPLEMENTED };
-}
-
-template<SocketOpt opt>
-Result<void> Network::GetSocketOption(
-    Socket sock,
-    SocketOption<opt, MulticastGroup> option) const
-{
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
-
-    return Failure{ E_NOT_IMPLEMENTED };
-}
-
-template<SocketOpt opt>
-Result<void> Network::SetSocketOption(
-    Socket sock,
-    SocketOption<opt, bool> option)
-{
-    if (sock == INVALID_SOCKET)
-    {
-        return Failure(E_INVALID_ARGUMENT);
-    }
-
-    int32_t value{ option.data };
-    if (auto result = SetSocketOption(
-        sock,
-        option.option,
-        &value,
-        sizeof(value)); !result)
-    {
-        return result.Error();
-    }
-
-    return Success;
-}
-
-template<SocketOpt opt>
-Result<void> Network::SetSocketOption(
-    Socket sock,
-    SocketOption<opt, int32_t> option)
-{
-    if (sock == INVALID_SOCKET)
-    {
-        return Failure(E_INVALID_ARGUMENT);
-    }
-
-    if (auto result = SetSocketOption(
-        sock,
-        option.option,
-        &option.data,
-        option.size); !result)
-    {
-        return result.Error();
-    }
-
-    return Success;
-}
-
-template<SocketOpt opt>
-Result<void> Network::SetSocketOption(
-    Socket sock,
-    SocketOption<opt, Clock::duration> option)
-{
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
-
-    return Failure{ E_NOT_IMPLEMENTED };
-}
-
-template<SocketOpt opt>
-Result<void> Network::SetSocketOption(
-    Socket sock,
-    SocketOption<opt, MulticastGroup> option)
-{
-    FUSION_UNUSED(sock);
-    FUSION_UNUSED(option);
-
-    return Failure{ E_NOT_IMPLEMENTED };
+    return Failure(E_NOT_SUPPORTED);
 }
 
 }  // namespace Fusion
@@ -403,6 +368,18 @@ struct fmt::formatter<Fusion::SocketOpt>
         return formatter<fmt::string_view>::format(
             Fusion::ToString(opt),
             ctx);
+    }
+};
+
+template<Fusion::SocketOpt opt, typename T>
+struct fmt::formatter<Fusion::SocketOption<opt, T>>
+{
+    template<typename Context>
+    auto format(
+        Fusion::SocketOption<opt, T>,
+        Context& ctx)
+    {
+        return fmt::format_to(ctx, "SocketOption<{}>", opt);
     }
 };
 
