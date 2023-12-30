@@ -310,6 +310,7 @@ enum class SocketOpt : uint8_t
     TcpKeepCount,
     TcpKeepIdle,
     TcpKeepInterval,
+    TcpNoDelay,  // Specifically Nagle
     TimeToLive,
     Type,
 
@@ -1175,6 +1176,11 @@ namespace SocketOptions
     //
     //
     using TcpKeepInterval = SocketOption<SocketOpt::TcpKeepInterval, Clock::duration>;
+
+    //
+    //
+    //
+    using TcpNoDelay = SocketOption<SocketOpt::TcpNoDelay, bool>;
 
     //
     //

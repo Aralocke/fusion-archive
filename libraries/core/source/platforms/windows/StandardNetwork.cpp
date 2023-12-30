@@ -150,6 +150,19 @@ Result<Socket> StandardNetwork::CreateSocket(
         return GetLastNetworkFailure();
     }
 
+    if (type == SocketType::Stream)
+    {
+        using namespace SocketOptions;
+
+        if (Result<void> result = Network::SetSocketOption<TcpNoDelay>(
+            sock,
+            true /* disable */); !result)
+        {
+            return result.Error()
+                .WithContext("failed to disable nagle's algorithm");
+        }
+    }
+
     return sock;
 }
 

@@ -503,6 +503,7 @@ int32_t Internal::GetSocketOptLevel(SocketOpt option)
         int32_t(IPPROTO_TCP),  // TcpKeepCount
         int32_t(IPPROTO_TCP),  // TcpKeepIdle
         int32_t(IPPROTO_TCP),  // TcpKeepInterval
+        int32_t(IPPROTO_TCP),  // TcpNoDelay
         int32_t(IPPROTO_IP),   // TimeToLive
         int32_t(SOL_SOCKET),   // Type
     };
@@ -548,6 +549,7 @@ int32_t Internal::GetSocketOpt(SocketOpt option)
         int32_t(-1),                 // TcpKeepIdle
 #endif
         int32_t(TCP_KEEPINTVL),      // TcpKeepInterval
+        int32_t(TCP_NODELAY),        // TcpNoDelay
         int32_t(IP_TTL),             // TimeToLive
         int32_t(SO_TYPE),            // Type
     };
@@ -583,6 +585,7 @@ std::string_view ToString(SocketOpt option)
         "TCP_KEEPCNT"sv,        // TcpKeepCount
         "TCP_KEEPIDLE"sv,       // TcpKeepIdle
         "TCP_KEEPINTVL"sv,      // TcpKeepInterval
+        "TCP_NODELAY"sv,        // TcpNoDelay
         "IP_TTL"sv,             // TimeToLive
         "SO_TYPE"sv,            // Type
     };

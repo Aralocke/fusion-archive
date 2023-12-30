@@ -151,6 +151,17 @@ Result<Socket> StandardNetwork::CreateSocket(
                  type, family, proto);
     }
 
+    if (type == SocketType::Stream)
+    {
+        if (Result<void> result = Network::SetSocketOption(
+            sock,
+            SocketOptions::TcpNoDelay(1 /* disable */)); !result)
+        {
+            return result.Error()
+                .WithContext("failed to disable nagle's algorithm");
+        }
+    }
+
     return sock;
 }
 
