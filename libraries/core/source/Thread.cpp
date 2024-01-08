@@ -14,11 +14,12 @@
  * limitations under the License.
  **/
 
-#include <Fusion/Thread.h>
+#include <Fusion/Internal/Thread.h>
 
 #include <Fusion/Macros.h>
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <mutex>
 #include <thread>
@@ -26,6 +27,28 @@
 
 namespace Fusion
 {
+// -------------------------------------------------------------
+// Thread                                                  START
+namespace
+{
+thread_local std::array<char, 64> tlsThreadBuffer = { 0 };
+thread_local std::string_view tlsThreadName;
+}  // namespace Data
+
+std::string_view Thread::GetName()
+{
+    return tlsThreadName;
+}
+
+void Thread::SetName(std::string_view name)
+{
+    name.copy(tlsThreadBuffer.data(), tlsThreadBuffer.size());
+    tlsThreadBuffer[name.size()] = 0;
+    tlsThreadName = std::string_view(tlsThreadBuffer.data(), name.size());
+
+    Internal::SetThreadName(name);
+}
+// Thread                                                    END
 // -------------------------------------------------------------
 // ThreadPool                                              START
 struct ThreadPool::Task

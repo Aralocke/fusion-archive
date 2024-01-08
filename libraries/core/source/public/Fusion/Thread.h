@@ -114,6 +114,38 @@ private:
 //
 //
 //
+class Thread final
+{
+public:
+    Thread(const Thread&) = delete;
+    Thread& operator=(const Thread&) = delete;
+
+public:
+    using Id = uint64_t;
+    static constexpr Id INVALID_THREAD_ID = (~0);
+
+public:
+    //
+    //
+    //
+    static Id CurrentThreadId();
+
+    //
+    //
+    //
+    static std::string_view GetName();
+
+    //
+    //
+    //
+    static void SetName(std::string_view name);
+
+public:
+};
+
+//
+//
+//
 template<typename T>
 class ThreadSafe final
 {
