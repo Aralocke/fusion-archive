@@ -361,7 +361,10 @@ static_assert(_NATIVE_WCHAR_T_DEFINED, "wchar_t support required");
 #else
 #define FUSION_THREAD_ATTRIBUTE(attr)
 #endif
+#else
+#define FUSION_THREAD_ATTRIBUTE(attr)
 #endif
+
 
 namespace Fusion
 {
