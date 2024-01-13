@@ -559,4 +559,177 @@ void MemoryWriter::Skip(size_t count)
 }
 // MemoryWriter                                              END
 // -------------------------------------------------------------
+// RingBuffer                                              START
+RingBuffer::RingBuffer(size_t size)
+    : m_buffer(new uint8_t[size])
+    , m_size(size)
+{ }
+
+RingBuffer::RingBuffer(
+    void* buffer,
+    size_t size)
+    : m_buffer(static_cast<uint8_t*>(buffer))
+    , m_size(size)
+    , m_embedded(true)
+{
+    FUSION_ASSERT(buffer);
+    FUSION_ASSERT(size > 0);
+}
+
+RingBuffer::~RingBuffer()
+{
+    if (m_embedded)
+    {
+        delete[] m_buffer;
+    }
+}
+
+size_t RingBuffer::Advance(size_t count)
+{
+    FUSION_ASSERT(count <= WritableSize());
+
+    if (count == 0)
+    {
+        return 0;
+    }
+
+    m_empty = false;
+    if (m_writeOffset + count < m_size)
+    {
+        m_writeOffset += count;
+        return count;
+    }
+    else
+    {
+        size_t firstWrite = m_size - m_writeOffset;
+        size_t secondWrite = count - firstWrite;
+
+        m_writeOffset = secondWrite;
+        return secondWrite;
+    }
+
+    return 0;
+}
+
+size_t RingBuffer::Capacity() const
+{
+    return m_size;
+}
+
+size_t RingBuffer::Peek(
+    void* buffer,
+    size_t count) const
+{
+    size_t readLength = std::min(count, ReadableSize());
+
+    if (!readLength)
+    {
+        return 0;
+    }
+
+    uint8_t* outputU8 = static_cast<uint8_t*>(buffer);
+
+    if (m_readOffset + readLength < m_size)
+    {
+        memcpy(outputU8, m_buffer + m_readOffset, readLength);
+    }
+    else
+    {
+        size_t firstRead = m_size - m_readOffset;
+        size_t secondRead = readLength - firstRead;
+
+        memcpy(outputU8, m_buffer + m_readOffset, firstRead);
+        memcpy(outputU8 + firstRead, m_buffer, secondRead);
+    }
+
+    return readLength;
+}
+
+size_t RingBuffer::Read(
+    void* buffer,
+    size_t count)
+{
+    size_t readLength = Peek(buffer, count);
+    return Skip(readLength);
+}
+
+size_t RingBuffer::ReadableSize() const
+{
+    size_t size = 0;
+
+    if (!m_empty)
+    {
+        size = m_readOffset < m_writeOffset
+            ? m_writeOffset - m_readOffset
+            : m_size - m_readOffset + m_writeOffset;
+    }
+
+    return size;
+}
+
+size_t RingBuffer::Skip(size_t count)
+{
+    size_t skipCount = std::min(count, ReadableSize());
+
+    if (!skipCount)
+    {
+        return 0;
+    }
+
+    m_readOffset = (m_readOffset + skipCount) % m_size;
+
+    if (m_readOffset == m_writeOffset)
+    {
+        m_readOffset = 0;
+        m_writeOffset = 0;
+        m_empty = true;
+    }
+
+    return skipCount;
+}
+
+size_t RingBuffer::WritableSize() const
+{
+    size_t size = 0;
+
+    if (!m_empty)
+    {
+        size = m_writeOffset <= m_readOffset
+            ? m_readOffset - m_writeOffset
+            : m_size - m_writeOffset + m_readOffset;
+    }
+
+    return size;
+}
+
+size_t RingBuffer::Write(
+    const void* buffer,
+    size_t count)
+{
+    size_t writeLength = std::min(count, WritableSize());
+
+    if (!writeLength)
+    {
+        return 0;
+    }
+
+    const uint8_t* inputU8 = static_cast<const uint8_t*>(buffer);
+
+    if (m_writeOffset + writeLength < m_size)
+    {
+        memcpy(m_buffer + m_writeOffset, inputU8, writeLength);
+    }
+    else
+    {
+        size_t firstWrite = m_size - m_writeOffset;
+        size_t secondWrite = writeLength - firstWrite;
+
+        memcpy(m_buffer + m_writeOffset, inputU8, firstWrite);
+        memcpy(m_buffer, inputU8 + firstWrite, secondWrite);
+    }
+
+    return writeLength;
+}
+// RingBuffer                                                END
+// -------------------------------------------------------------
 }  // namespace Fusion
