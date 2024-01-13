@@ -20,6 +20,8 @@
 #include <Fusion/Macros.h>
 #include <Fusion/TypeTraits.h>
 
+#include <span>
+#include <string_view>
 #include <utility>
 
 namespace Fusion
@@ -85,11 +87,206 @@ private:
     T m_obj;
 };
 
+//
+//
+//
 template<typename Fn>
 static ScopeGuard<std::decay_t<Fn>> CreateScopeGuard(Fn fn)
 {
     return ScopeGuard<std::decay_t<Fn>>(std::move(fn));
 }
+
+//
+//
+//
+class MemoryReader final
+{
+public:
+    //
+    //
+    //
+    MemoryReader() = default;
+
+    //
+    //
+    //
+    MemoryReader(std::span<const uint8_t> data);
+
+    //
+    //
+    //
+    MemoryReader(const void* data, size_t size)
+        : m_data(reinterpret_cast<const uint8_t*>(data))
+        , m_size(size)
+    { }
+
+    //
+    //
+    //
+    template<typename T, FUSION_REQUIRES(IsLikeByte<T>::value)>
+    constexpr MemoryReader(const T* data, size_t size)
+        : m_data(reinterpret_cast<const uint8_t*>(data))
+        , m_size(size)
+    { }
+
+    //
+    //
+    //
+    template<typename T, size_t N, FUSION_REQUIRES(IsLikeByte<T>::value)>
+    constexpr MemoryReader(const T(&data)[N])
+        : m_data(data)
+        , m_size(N)
+    { }
+
+    //
+    //
+    //
+    template<typename T, size_t N, FUSION_REQUIRES(!IsLikeByte<T>::value)>
+    constexpr MemoryReader(const T(&data)[N])
+        : m_data(data)
+        , m_size(sizeof(T) * N)
+    { }
+
+    ~MemoryReader() = default;
+
+public:
+    //
+    //
+    //
+    size_t Offset() const;
+
+    //
+    //
+    //
+    uint8_t Read();
+
+    //
+    //
+    //
+    uint8_t Read(size_t offset);
+
+    //
+    //
+    //
+    std::span<const uint8_t> ReadSpan(size_t length);
+
+    //
+    //
+    //
+    std::span<const uint8_t> ReadSpan(size_t offset, size_t length);
+
+    //
+    //
+    //
+    std::string_view ReadString(size_t length);
+
+    //
+    //
+    //
+    std::string_view ReadString(size_t offset, size_t length);
+
+    //
+    //
+    //
+    size_t Remaining() const;
+
+    //
+    //
+    //
+    void Reset();
+
+    //
+    //
+    //
+    void Seek(size_t offset);
+
+    //
+    //
+    //
+    size_t Size() const;
+
+    //
+    //
+    //
+    void Skip(size_t count);
+
+    //
+    //
+    //
+    MemoryReader Span(size_t size);
+
+    //
+    //
+    //
+    MemoryReader Span(size_t offset, size_t size);
+
+public:
+    //
+    //
+    //
+    uint16_t Read16_LE();
+
+    //
+    //
+    //
+    uint16_t Read16_LE(size_t offset);
+
+    //
+    //
+    //
+    uint32_t Read32_LE();
+
+    //
+    //
+    //
+    uint32_t Read32_LE(size_t offset);
+
+    //
+    //
+    //
+    uint64_t Read64_LE();
+
+    //
+    //
+    //
+    uint64_t Read64_LE(size_t offset);
+
+public:
+    //
+    //
+    //
+    uint16_t Read16_BE();
+
+    //
+    //
+    //
+    uint16_t Read16_BE(size_t offset);
+
+    //
+    //
+    //
+    uint32_t Read32_BE();
+
+    //
+    //
+    //
+    uint32_t Read32_BE(size_t offset);
+
+    //
+    //
+    //
+    uint64_t Read64_BE();
+
+    //
+    //
+    //
+    uint64_t Read64_BE(size_t offset);
+
+private:
+    const uint8_t* m_data{ nullptr };
+    size_t m_offset{ 0 };
+    size_t m_size{ 0 };
+};
 
 }  // namespace Fusion
 
