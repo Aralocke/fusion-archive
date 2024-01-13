@@ -288,6 +288,231 @@ private:
     size_t m_size{ 0 };
 };
 
+//
+//
+//
+class MemoryWriter final
+{
+public:
+    //
+    //
+    //
+    constexpr MemoryWriter() = default;
+
+    //
+    //
+    //
+    MemoryWriter(void* data, size_t size);
+
+    //
+    //
+    //
+    MemoryWriter(std::span<uint8_t> data);
+
+    //
+    //
+    //
+    template<typename T, FUSION_REQUIRES(IsLikeByte<T>::value)>
+    constexpr MemoryWriter(T* data, size_t size)
+        : m_data(data)
+        , m_size(size)
+    { }
+
+    //
+    //
+    //
+    template<typename T, size_t N, FUSION_REQUIRES(IsLikeByte<T>::value)>
+    constexpr MemoryWriter(T(&data)[N])
+        : m_data(data)
+        , m_size(N)
+    { }
+
+    //
+    //
+    //
+    template<typename T, FUSION_REQUIRES(std::is_trivially_constructible<T>::value)>
+    constexpr MemoryWriter(T& data)
+        : m_data(&data)
+        , m_size(sizeof(T))
+    { }
+
+    ~MemoryWriter() = default;
+
+public:
+    //
+    //
+    //
+    const uint8_t* Data() const;
+
+    //
+    //
+    //
+    template<typename T, FUSION_REQUIRES(std::is_trivially_constructible<T>::value)>
+    MemoryWriter ObjectWriter()
+    {
+        return ObjectWriter<T>(m_offset);
+    }
+
+    //
+    //
+    //
+    template<typename T, FUSION_REQUIRES(std::is_trivially_constructible<T>::value)>
+    MemoryWriter ObjectWriter(size_t offset)
+    {
+        if (offset + sizeof(T) <= m_size)
+        {
+            Seek(offset);
+            MemoryWriter writer(m_data + m_offset, sizeof(T));
+
+            m_offset += sizeof(T);
+            return writer;
+        }
+        return {};
+    }
+
+    //
+    //
+    //
+    size_t Offset() const;
+
+    //
+    //
+    //
+    void Put(const void* data, size_t size);
+
+    //
+    //
+    //
+    void Put(size_t offset, const void* data, size_t size);
+
+    //
+    //
+    //
+    void Put(std::span<const uint8_t> data);
+
+    //
+    //
+    //
+    void Put(size_t offset, std::span<const uint8_t> data);
+
+    //
+    //
+    //
+    void PutString(const char* str, size_t length);
+
+    //
+    //
+    //
+    void PutString(size_t offset, const char* str, size_t length);
+
+    //
+    //
+    //
+    void PutString(std::string_view str);
+
+    //
+    //
+    //
+    void PutString(size_t offset, std::string_view str);
+
+    //
+    //
+    //
+    void PutZero(size_t count);
+
+    //
+    //
+    //
+    void PutZero(size_t offset, size_t count);
+
+    //
+    //
+    //
+    size_t Remaining() const;
+
+    //
+    //
+    //
+    void Seek(size_t offset);
+
+    //
+    //
+    //
+    size_t Size() const;
+
+    //
+    //
+    //
+    void Skip(size_t count);
+
+public:
+    //
+    //
+    //
+    void Put16_LE(uint16_t value);
+
+    //
+    //
+    //
+    void Put16_LE(size_t offset, uint16_t value);
+
+    //
+    //
+    //
+    void Put32_LE(uint32_t value);
+
+    //
+    //
+    //
+    void Put32_LE(size_t offset, uint32_t value);
+
+    //
+    //
+    //
+    void Put64_LE(uint64_t value);
+
+    //
+    //
+    //
+    void Put64_LE(size_t offset, uint64_t value);
+
+public:
+    //
+    //
+    //
+    void Put16_BE(uint16_t value);
+
+    //
+    //
+    //
+    void Put16_BE(size_t offset, uint16_t value);
+
+    //
+    //
+    //
+    void Put32_BE(uint32_t value);
+
+    //
+    //
+    //
+    void Put32_BE(size_t offset, uint32_t value);
+
+    //
+    //
+    //
+    void Put64_BE(uint64_t value);
+
+    //
+    //
+    //
+    void Put64_BE(size_t offset, uint64_t value);
+
+private:
+    uint8_t* m_data{ nullptr };
+    size_t m_offset{ 0 };
+    size_t m_size{ 0 };
+};
+
 }  // namespace Fusion
 
 #define FUSION_SCOPE_GUARD(...) \
