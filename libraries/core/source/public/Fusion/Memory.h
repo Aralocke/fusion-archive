@@ -513,6 +513,95 @@ private:
     size_t m_size{ 0 };
 };
 
+//
+//
+//
+class RingBuffer
+{
+public:
+    RingBuffer(const RingBuffer&) = delete;
+    RingBuffer& operator=(const RingBuffer) = delete;
+
+public:
+    //
+    //
+    //
+    RingBuffer() = default;
+
+    //
+    //
+    //
+    RingBuffer(size_t size);
+
+    //
+    //
+    //
+    RingBuffer(void* buffer, size_t size);
+
+    ~RingBuffer();
+
+    //
+    //
+    //
+    size_t Advance(size_t count);
+
+    //
+    //
+    //
+    size_t Capacity() const;
+
+    //
+    //
+    //
+    size_t Peek(void* buffer, size_t count) const;
+
+    //
+    //
+    //
+    size_t Read(void* buffer, size_t count);
+
+    //
+    //
+    //
+    size_t ReadableSize() const;
+
+    //
+    //
+    //
+    size_t Skip(size_t count);
+
+    //
+    //
+    //
+    size_t Write(const void* data, size_t count);
+
+    //
+    //
+    //
+    size_t WritableSize() const;
+
+private:
+    uint8_t* m_buffer{ nullptr };
+    size_t m_size{ 0 };
+    size_t m_readOffset{ 0 };
+    size_t m_writeOffset{ 0 };
+    bool m_embedded{ false };
+    bool m_empty{ false };
+};
+
+//
+//
+//
+template<uint32_t N>
+class EmbeddedRingBuffer : public RingBuffer
+{
+public:
+    EmbeddedRingBuffer() : RingBuffer(m_storage, N) { }
+
+private:
+    alignas(uint8_t) uint8_t m_storage[N];
+};
+
 }  // namespace Fusion
 
 #define FUSION_SCOPE_GUARD(...) \
