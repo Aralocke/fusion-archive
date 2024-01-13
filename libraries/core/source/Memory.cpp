@@ -334,4 +334,229 @@ MemoryReader MemoryReader::Span(
 }
 // MemoryReader                                              END
 // -------------------------------------------------------------
+// MemoryWriter                                            START
+MemoryWriter::MemoryWriter(void* data, size_t size)
+    : m_data(reinterpret_cast<uint8_t*>(data))
+    , m_size(size)
+{ }
+
+MemoryWriter::MemoryWriter(std::span<uint8_t> data)
+    : m_data(data.data())
+    , m_size(data.size())
+{ }
+
+const uint8_t* MemoryWriter::Data() const
+{
+    return m_data;
+}
+
+size_t MemoryWriter::Offset() const
+{
+    return m_offset;
+}
+
+void MemoryWriter::Put(
+    const void* data,
+    size_t size)
+{
+    Put(m_offset, data, size);
+}
+
+void MemoryWriter::Put(
+    size_t offset,
+    const void* data,
+    size_t size)
+{
+    if (offset + size <= m_size)
+    {
+        Seek(offset);
+
+        memcpy(m_data + m_offset, data, size);
+        m_offset += size;
+    }
+}
+
+void MemoryWriter::Put(std::span<const uint8_t> data)
+{
+    Put(m_offset, data.data(), data.size());
+}
+
+void MemoryWriter::Put(
+    size_t offset,
+    std::span<const uint8_t> data)
+{
+    Put(offset, data.data(), data.size());
+}
+
+void MemoryWriter::Put16_BE(uint16_t value)
+{
+    Put16_BE(m_offset, value);
+}
+
+void MemoryWriter::Put16_BE(size_t offset, uint16_t value)
+{
+    uint8_t values[2] = {
+        uint8_t(value >> 8),
+        uint8_t(value)
+    };
+
+    Put(offset, values, sizeof(values));
+}
+
+void MemoryWriter::Put16_LE(uint16_t value)
+{
+    Put16_LE(m_offset, value);
+}
+
+void MemoryWriter::Put16_LE(size_t offset, uint16_t value)
+{
+    uint8_t values[2] = {
+        uint8_t(value),
+        uint8_t(value >> 8)
+    };
+
+    Put(offset, values, sizeof(values));
+}
+
+void MemoryWriter::Put32_BE(uint32_t value)
+{
+    Put32_BE(m_offset, value);
+}
+
+void MemoryWriter::Put32_BE(size_t offset, uint32_t value)
+{
+    uint8_t values[4] = {
+        uint8_t(value >> 24),
+        uint8_t(value >> 16),
+        uint8_t(value >> 8),
+        uint8_t(value)
+    };
+
+    Put(offset, values, sizeof(values));
+}
+
+void MemoryWriter::Put32_LE(uint32_t value)
+{
+    Put32_LE(m_offset, value);
+}
+
+void MemoryWriter::Put32_LE(size_t offset, uint32_t value)
+{
+    uint8_t values[4] = {
+        uint8_t(value),
+        uint8_t(value >> 8),
+        uint8_t(value >> 16),
+        uint8_t(value >> 24)
+    };
+
+    Put(offset, values, sizeof(values));
+}
+
+void MemoryWriter::Put64_BE(uint64_t value)
+{
+    Put64_BE(m_offset, value);
+}
+
+void MemoryWriter::Put64_BE(size_t offset, uint64_t value)
+{
+    uint8_t values[8] = {
+        uint8_t(value >> 56),
+        uint8_t(value >> 48),
+        uint8_t(value >> 40),
+        uint8_t(value >> 32),
+        uint8_t(value >> 24),
+        uint8_t(value >> 16),
+        uint8_t(value >> 8),
+        uint8_t(value)
+    };
+
+    Put(offset, values, sizeof(values));
+}
+
+void MemoryWriter::Put64_LE(uint64_t value)
+{
+    Put64_LE(m_offset, value);
+}
+
+void MemoryWriter::Put64_LE(size_t offset, uint64_t value)
+{
+    uint8_t values[8] = {
+        uint8_t(value),
+        uint8_t(value >> 8),
+        uint8_t(value >> 16),
+        uint8_t(value >> 24),
+        uint8_t(value >> 32),
+        uint8_t(value >> 40),
+        uint8_t(value >> 48),
+        uint8_t(value >> 56)
+    };
+
+    Put(offset, values, sizeof(values));
+}
+
+void MemoryWriter::PutString(
+    const char* str,
+    size_t length)
+{
+    Put(m_offset, str, length);
+}
+
+void MemoryWriter::PutString(
+    size_t offset,
+    const char* str,
+    size_t length)
+{
+    Put(offset, str, length);
+}
+
+void MemoryWriter::PutString(std::string_view str)
+{
+    Put(m_offset, str.data(), str.size());
+}
+
+void MemoryWriter::PutString(
+    size_t offset,
+    std::string_view str)
+{
+    Put(offset, str.data(), str.size());
+}
+
+void MemoryWriter::PutZero(size_t count)
+{
+    PutZero(m_offset, count);
+}
+
+void MemoryWriter::PutZero(size_t offset, size_t count)
+{
+    if (offset + count <= m_size)
+    {
+        Seek(offset);
+
+        memset(m_data + m_offset, 0, count);
+        m_offset += count;
+    }
+}
+
+size_t MemoryWriter::Remaining() const
+{
+    return (m_size - m_offset);
+}
+
+void MemoryWriter::Seek(size_t offset)
+{
+    FUSION_ASSERT(offset <= m_size);
+    m_offset = offset;
+}
+
+size_t MemoryWriter::Size() const
+{
+    return m_size;
+}
+
+void MemoryWriter::Skip(size_t count)
+{
+    Seek(m_offset + count);
+}
+// MemoryWriter                                              END
+// -------------------------------------------------------------
 }  // namespace Fusion

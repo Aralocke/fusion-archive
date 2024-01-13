@@ -12,8 +12,8 @@ namespace Fusion
 #pragma pack(push, 1)
 struct PackedHeader
 {
-    uint32_t length = 0;
-    uint64_t fnv = 0;
+    uint32_t length;
+    uint64_t fnv;
 };
 #pragma pack(pop)
 
