@@ -149,13 +149,14 @@ endif()
 list(APPEND fusion_private_link_targets
     crypto    # OpenSSL crypto library
     libcurl   # curl
+    rapidjson # rapidjson
+    simdjson  # json parsing support
     ssl       # OpenSSL SSL library
     xxhash    # super fast hashing
 )
 
 list(APPEND fusion_public_link_targets
     fmt       # fmtlib for logging
-    simdjson  # json parsing support
 )
 
 target_link_libraries(Fusion

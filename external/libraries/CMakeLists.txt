@@ -134,6 +134,35 @@ if(FUSION_MAIN_PROJECT)
 endif()
 
 ################################
+# rapidjson
+################################
+
+FUSION_INIT_GIT_SUBMODULE(rapidjson)
+
+set(RAPIDJSON_BUILD_DOC OFF CACHE INTERNAL "")
+set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(RAPIDJSON_BUILD_TESTS OFF CACHE INTERNAL "")
+set(RAPIDJSON_BUILD_THIRDPARTY_GTEST OFF CACHE INTERNAL "")
+set(RAPIDJSON_BUILD_CXX17 ON CACHE INTERNAL "")
+
+set(RAPIDJSON_BUILD_ASAN $<IF:$<CONFIG:Asan>,ON,OFF> CACHE INTERNAL "")
+set(RAPIDJSON_BUILD_UBSAN $<IF:$<CONFIG:Ubsan>,ON,OFF> CACHE INTERNAL "")
+
+add_subdirectory(rapidjson EXCLUDE_FROM_ALL)
+add_library(rapidjson ALIAS RapidJSON)
+target_include_directories(RapidJSON INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+# Ensure that the fmt target ends up in the correct folder in the solution.
+set_property(TARGET RapidJSON PROPERTY FOLDER "External")
+
+if(FUSION_MAIN_PROJECT)
+    FSN_SET_TARGET_OUTPUT(RapidJSON "${FUSION_BUILD_ROOT}/external")
+endif()
+
+################################
 # simdjson
 ################################
 
