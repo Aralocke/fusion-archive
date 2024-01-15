@@ -18,13 +18,13 @@
 
 #include <Fusion/Assert.h>
 #include <Fusion/Logging.h>
-#include <Fusion/Platform.h>
 
+#include <ctime>
 #include <iostream>
 
-#if FUSION_PLATFORM_POSIX
-#include <ctime>
-#endif
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 
 namespace Fusion
 {
@@ -113,21 +113,44 @@ void Console::Write(
 ConsoleLogger::ConsoleLogger(Params params)
     : m_params(std::move(params))
 {
-    m_buffer.reserve(m_params.bufferSize);
+    m_logBuffer.reserve(m_params.bufferSize);
+    m_jsonBuffer.reserve(m_params.bufferSize);
 }
 
 ConsoleLogger::~ConsoleLogger()
 {
     using namespace std::string_view_literals;
 
-    if (!m_buffer.empty())
+    if (!m_logBuffer.empty())
     {
-        Console::Write(m_params.target, m_buffer);
-        m_buffer.clear();
+        Console::Write(m_params.target, m_logBuffer);
+        m_logBuffer.clear();
     }
     if (m_params.colors)
     {
         Console::Write(m_params.target, "\x1B[0m"sv);
+    }
+}
+
+void ConsoleLogger::FlushBuffer(
+    LogLevel level,
+    std::string& buffer)
+{
+    bool capacity = (buffer.size() >= m_params.bufferSize);
+
+    if (level >= LogLevel::Warning || capacity)
+    {
+        Console::Write(m_params.target, buffer);
+        buffer.clear();
+    }
+
+    if (capacity)
+    {
+        if (buffer.capacity() > m_params.bufferSize)
+        {
+            buffer.resize(m_params.bufferSize);
+            buffer.shrink_to_fit();
+        }
     }
 }
 
@@ -147,7 +170,110 @@ void ConsoleLogger::Log(const LogRecord& record)
 
 void ConsoleLogger::LogJson(const LogRecord& record)
 {
-    // NO-OP
+    using namespace std::chrono;
+    using namespace rapidjson;
+
+    Document doc;
+    Document::AllocatorType& allocator = doc.GetAllocator();
+    doc.SetObject();
+
+    if (record.location)
+    {
+        Value location(kObjectType);
+
+        location.AddMember(
+            "filename",
+            Value(
+                record.location.shortFilename.data(),
+                record.location.shortFilename.size(),
+                allocator),
+            allocator);
+
+        location.AddMember(
+            "lineno",
+            record.location.lineno,
+            allocator);
+
+        doc.AddMember("location", std::move(location), allocator);
+    }
+
+    doc.AddMember(
+        "logger",
+        Value(
+            record.logger.data(),
+            record.logger.size(),
+            allocator),
+        allocator);
+
+    {
+        Value level(kObjectType);
+        std::string_view str = ToString(record.level);
+
+        level.AddMember(
+            "desc",
+            Value(
+                str.data(),
+                str.size(),
+                allocator),
+            allocator);
+
+        level.AddMember("level", uint8_t(record.level), allocator);
+        doc.AddMember("level", std::move(level), allocator);
+    }
+
+    doc.AddMember("threadId", record.threadId, allocator);
+
+    char buffer[32] = { 0 };
+    std::string_view time;
+    {
+        time_t input = system_clock::to_time_t(record.time);
+        struct tm now = { 0 };
+
+#if FUSION_PLATFORM_WINDOWS
+        localtime_s(&now, &input);
+#else
+        localtime_r(&input, &now);
+#endif
+
+        size_t count = strftime(
+            buffer,
+            sizeof(buffer) - 1,
+            "%Y-%m-%dT%H:%M:%S",
+            &now);
+        FUSION_ASSERT(count != 0);
+
+        time = std::string_view(buffer, count);
+    }
+    
+    if (!time.empty())
+    {
+        doc.AddMember(
+            "timestamp",
+            Value(
+                time.data(),
+                time.size(),
+                allocator),
+            allocator);
+    }
+
+    doc.AddMember(
+        "message",
+        Value(
+            record.message.c_str(),
+            record.message.size(),
+            allocator),
+        allocator);
+
+    StringBuffer buf;
+    PrettyWriter<rapidjson::StringBuffer> writer(buf);
+    doc.Accept(writer);
+
+    size_t length = buf.GetLength();
+    m_jsonBuffer.reserve(length);
+    m_jsonBuffer.append(buf.GetString(), length);
+    m_jsonBuffer += "\n";
+
+    FlushBuffer(record.level, m_jsonBuffer);
 }
 
 void ConsoleLogger::LogText(const LogRecord& record)
@@ -156,25 +282,25 @@ void ConsoleLogger::LogText(const LogRecord& record)
     using namespace std::string_view_literals;
     using Color = Console::Color;
 
-    m_buffer.reserve(64 + record.message.size());
+    m_logBuffer.reserve(64 + record.message.size());
 
     if (m_params.colors)
     {
-        m_buffer.append(ToString(Color::Reset));
+        m_logBuffer.append(ToString(Color::Reset));
 
         switch (record.level)
         {
         case LogLevel::Fatal:
-            m_buffer.append(ToString(Color::Magenta));
+            m_logBuffer.append(ToString(Color::Magenta));
             break;
         case LogLevel::Error:
-            m_buffer.append(ToString(Color::Red));
+            m_logBuffer.append(ToString(Color::Red));
             break;
         case LogLevel::Warning:
-            m_buffer.append(ToString(Color::Yellow));
+            m_logBuffer.append(ToString(Color::Yellow));
             break;
         case LogLevel::Trace:
-            m_buffer.append(ToString(Color::Cyan));
+            m_logBuffer.append(ToString(Color::Cyan));
             break;
         default:
             break;
@@ -201,58 +327,43 @@ void ConsoleLogger::LogText(const LogRecord& record)
             &now);
         FUSION_ASSERT(count != 0);
 
-        m_buffer.append("["sv);
-        m_buffer.append(std::string_view(buffer, count));
-        m_buffer.append("]"sv);
+        m_logBuffer.append("["sv);
+        m_logBuffer.append(std::string_view(buffer, count));
+        m_logBuffer.append("]"sv);
     }
 
     if (!record.logger.empty())
     {
-        m_buffer.append("["sv);
-        m_buffer.append(record.logger);
-        m_buffer.append("]"sv);
+        m_logBuffer.append("["sv);
+        m_logBuffer.append(record.logger);
+        m_logBuffer.append("]"sv);
     }
 
-    m_buffer.append("["sv);
-    m_buffer.append(ToString(record.level));
-    m_buffer.append("]"sv);
+    m_logBuffer.append("["sv);
+    m_logBuffer.append(ToString(record.level));
+    m_logBuffer.append("]"sv);
 
 #ifndef _NDEBUG
     if (record.location)
     {
-        m_buffer.append("["sv);
-        m_buffer.append(record.location.shortFilename);
-        m_buffer.append(":"sv);
-        m_buffer.append(std::to_string(record.location.lineno));
-        m_buffer.append("]"sv);
+        m_logBuffer.append("["sv);
+        m_logBuffer.append(record.location.shortFilename);
+        m_logBuffer.append(":"sv);
+        m_logBuffer.append(std::to_string(record.location.lineno));
+        m_logBuffer.append("]"sv);
     }
 #endif
 
-    m_buffer.append(" "sv);
-    m_buffer.append(record.message);
-    m_buffer.append("\n"sv);
+    m_logBuffer.append(" "sv);
+    m_logBuffer.append(record.message);
+    m_logBuffer.append("\n"sv);
 
     if (m_params.colors)
     {
-        m_buffer.append(ToString(Color::Reset));
+        m_logBuffer.append(ToString(Color::Reset));
     }
 
-    bool capacity = (m_buffer.size() >= m_params.bufferSize);
-
-    if (record.level >= LogLevel::Warning || capacity)
-    {
-        Console::Write(m_params.target, m_buffer);
-        m_buffer.clear();
-    }
-
-    if (capacity)
-    {
-        if (m_buffer.capacity() > m_params.bufferSize)
-        {
-            m_buffer.resize(m_params.bufferSize);
-            m_buffer.shrink_to_fit();
-        }
-    }
+    FlushBuffer(record.level, m_logBuffer);
 }
 // ConsoleLogger                                             END
 // -------------------------------------------------------------

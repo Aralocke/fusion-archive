@@ -236,9 +236,15 @@ private:
     //
     void LogText(const LogRecord& record) FUSION_REQUIRES_LOCK(m_mutex);
 
+    //
+    //
+    //
+    void FlushBuffer(LogLevel level, std::string& buffer) FUSION_REQUIRES_LOCK(m_mutex);
+
 private:
     Params m_params;
-    std::string m_buffer FUSION_GUARDED_BY(m_mutex);
+    std::string m_logBuffer FUSION_GUARDED_BY(m_mutex);
+    std::string m_jsonBuffer FUSION_GUARDED_BY(m_mutex);
     mutable std::mutex m_mutex;
 };
 }  // namespace Fusion
