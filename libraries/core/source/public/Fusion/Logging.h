@@ -20,6 +20,7 @@
 
 #include <Fusion/Compiler.h>
 #include <Fusion/Enum.h>
+#include <Fusion/Platform.h>
 #include <Fusion/Thread.h>
 
 #include <atomic>

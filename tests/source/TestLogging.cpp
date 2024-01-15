@@ -109,6 +109,43 @@ TEST(LoggingTests, WithConsoleLoggerMultiMessage)
     ASSERT_TRUE(hits == 5);
 }
 
+TEST(LoggingTests, WithJsonLoggerMultiMessage)
+{
+    Logging::Start();
+    FUSION_SCOPE_GUARD([] { Logging::Stop(); });
+
+    Logging::SetLogLevel(LogLevel::Debug);
+
+    ConsoleLogger console(ConsoleLogger::Params{
+        .colors = true,
+        .dark = true,
+        .timestamps = true,
+        .json = true,
+    });
+
+    int32_t hits = 0;
+    std::latch barrier(5);
+
+    Logging::AddSink([&](const LogRecord& record) {
+        ASSERT_EQ(record.message, "test 123");
+        console.Log(record);
+
+        ++hits;
+        barrier.count_down();
+    });
+
+    Logger testLogger = Logging::Get("Test");
+
+    FUSION_LOG_FATAL(testLogger, "test {}", 123);
+    FUSION_LOG_ERROR(testLogger, "test {}", 123);
+    FUSION_LOG_WARNING(testLogger, "test {}", 123);
+    FUSION_LOG_INFO(testLogger, "test {}", 123);
+    FUSION_LOG_DEBUG(testLogger, "test {}", 123);
+
+    barrier.wait();
+    ASSERT_TRUE(hits == 5);
+}
+
 TEST(LoggingTests, SyslogTest)
 {
 #if !FUSION_PLATFORM_POSIX
