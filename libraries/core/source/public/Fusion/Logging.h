@@ -20,11 +20,13 @@
 
 #include <Fusion/Compiler.h>
 #include <Fusion/Enum.h>
+#include <Fusion/Macros.h>
 #include <Fusion/Platform.h>
 #include <Fusion/Thread.h>
 
 #include <atomic>
 #include <chrono>
+#include <deque>
 #include <functional>
 #include <iosfwd>
 #include <memory>
@@ -301,6 +303,168 @@ private:
 //
 //
 //
+class SyslogSink final
+{
+public:
+    SyslogSink(const SyslogSink&) = delete;
+    SyslogSink& operator=(const SyslogSink&) = delete;
+
+public:
+    //
+    //
+    //
+    enum class Facility : uint8_t
+    {
+        User = 0,
+        System,
+        Local
+    };
+
+    //
+    //
+    //
+    enum class Option : uint8_t
+    {
+        None = 0,
+        Pid = 1 << 1,      // Include PID in message
+        Console = 1 << 2,  // Errors logged to console
+        NoDelay = 1 << 3,  // Connect when sending the first message
+        Lazy = 1 << 4,     // Connect when the first message is sent.
+        NoWait = 1 << 5,   // Do not wait for child processes
+
+        Default = (Option::Pid | Option::Lazy | NoWait)
+    };
+
+public:
+    struct Params
+    {
+        //
+        //
+        //
+        std::string identity;
+
+        //
+        //
+        //
+        Option options{ Option::Default };
+
+        //
+        //
+        //
+        Facility facility{ Facility::User };
+
+        //
+        //
+        //
+        int32_t local{ 0 };
+
+        constexpr Params(std::string_view identity)
+            : identity(identity)
+        { }
+    };
+
+public:
+    //
+    //
+    //
+    SyslogSink(Params params);
+
+    //
+    //
+    //
+    SyslogSink(
+        std::shared_ptr<LogFormatter> formatter,
+        Params params);
+
+    ~SyslogSink();
+
+    //
+    //
+    //
+    void Log(const LogRecord& record) const;
+
+private:
+    Params m_params;
+    std::shared_ptr<LogFormatter> m_formatter;
+};
+
+FUSION_ENUM_OPS(SyslogSink::Option);
+
+//
+//
+//
+class QueuedLogSink
+{
+public:
+    QueuedLogSink(const QueuedLogSink&) = delete;
+    QueuedLogSink& operator=(const QueuedLogSink&) = delete;
+
+public:
+    //
+    //
+    //
+    QueuedLogSink() = default;
+
+    //
+    //
+    //
+    QueuedLogSink(uint64_t count);
+
+    //
+    //
+    //
+    QueuedLogSink(
+        std::shared_ptr<LogFormatter> formatter,
+        uint64_t count = UINT64_MAX);
+
+    virtual ~QueuedLogSink();
+
+    //
+    //
+    //
+    size_t Capacity() const FUSION_EXCLUDES(m_mutex);
+
+    //
+    //
+    //
+    bool Empty() const FUSION_EXCLUDES(m_mutex);
+
+    //
+    //
+    //
+    void Flush(std::function<void(std::string_view)> fn) FUSION_EXCLUDES(m_mutex);;
+
+    //
+    //
+    //
+    void Log(const LogRecord& record);
+
+    //
+    //
+    //
+    size_t Size() const FUSION_EXCLUDES(m_mutex);
+
+protected:
+    //
+    //
+    //
+    void Log(std::string message) FUSION_EXCLUDES(m_mutex);
+
+protected:
+    mutable std::mutex m_mutex;
+
+private:
+    // TODO: eventually replace this with a lock-free queue
+    std::deque<std::string> m_messages FUSION_GUARDED_BY(m_mutex);
+
+private:
+    size_t m_count{ UINT64_MAX };
+    std::shared_ptr<LogFormatter> m_formatter;
+};
+
+//
+//
+//
 class Logging final
 {
 public:
@@ -345,64 +509,6 @@ public:
     //
     static void Stop();
 };
-
-//
-//
-//
-class SyslogSink final
-{
-public:
-    SyslogSink(const SyslogSink&) = delete;
-    SyslogSink& operator=(const SyslogSink&) = delete;
-
-public:
-    enum class Facility : uint8_t
-    {
-        User = 0,
-        System,
-        Local
-    };
-
-    enum class Option : uint8_t
-    {
-        None = 0,
-        Pid = 1 << 1,      // Include PID in message
-        Console = 1 << 2,  // Errors logged to console
-        NoDelay = 1 << 3,  // Connect when sending the first message
-        Lazy = 1 << 4,     // Connect when the first message is sent.
-        NoWait = 1 << 5,   // Do not wait for child processes
-
-        Default = (Option::Pid | Option::Lazy | NoWait)
-    };
-
-public:
-    struct Params
-    {
-        std::string identity;
-        Option options{ Option::Default };
-        Facility facility{ Facility::User };
-        int32_t local{ 0 };
-
-        constexpr Params(std::string_view identity)
-            : identity(identity)
-        { }
-    };
-
-public:
-    SyslogSink(Params params);
-    ~SyslogSink();
-
-    //
-    //
-    //
-    void Log(const LogRecord& record) const;
-
-private:
-    Params m_params;
-};
-
-FUSION_ENUM_OPS(SyslogSink::Option);
-
 }  // namespace Fusion
 
 #ifdef FUSION_DISABLE_LOGGING

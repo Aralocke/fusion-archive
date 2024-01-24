@@ -540,7 +540,14 @@ void Logging::Stop()
 // -------------------------------------------------------------
 // SyslogSink                                              START
 SyslogSink::SyslogSink(Params params)
+    : SyslogSink(nullptr, std::move(params))
+{ }
+
+SyslogSink::SyslogSink(
+    std::shared_ptr<LogFormatter> formatter,
+    Params params)
     : m_params(std::move(params))
+    , m_formatter(std::move(formatter))
 {
 #if FUSION_PLATFORM_POSIX
     static constexpr int32_t s_locals[8] = {
@@ -631,7 +638,11 @@ void SyslogSink::Log(const LogRecord& record) const
 
     std::string message;
 
-    if (record.location)
+    if (m_formatter)
+    {
+        m_formatter->FormatTo(message, record);
+    }
+    else if (record.location)
     {
         message = fmt::format("[{}][{}][{}:{}] {}",
             record.level,
@@ -658,5 +669,108 @@ void SyslogSink::Log(const LogRecord& record) const
     FUSION_UNUSED(record);
 }
 // SyslogSink                                                END
+// -------------------------------------------------------------
+// QueuedLogSink                                           START
+QueuedLogSink::QueuedLogSink(uint64_t count)
+    : m_count(size_t(count))
+{
+    FUSION_ASSERT(m_count > 0);
+}
+
+QueuedLogSink::QueuedLogSink(
+    std::shared_ptr<LogFormatter> formatter,
+    uint64_t count)
+    : QueuedLogSink(count)
+{
+    if (!formatter)
+    {
+        formatter = LogFormatter::Create(
+            LogFormatter::Params{
+                .json = false,
+                .colors = false,
+                .timestamps = true,
+            });
+    }
+
+    m_formatter = std::move(formatter);
+}
+
+QueuedLogSink::~QueuedLogSink() = default;
+
+size_t QueuedLogSink::Capacity() const
+{
+    std::lock_guard lock(m_mutex);
+
+    return m_count;
+}
+
+bool QueuedLogSink::Empty() const
+{
+    std::lock_guard lock(m_mutex);
+
+    return m_messages.empty();
+}
+
+void QueuedLogSink::Flush(std::function<void(std::string_view)> fn)
+{
+    std::unique_lock lock(m_mutex);
+
+    if (m_messages.empty())
+    {
+        return;
+    }
+
+    std::deque<std::string> messages;
+    {
+        messages = std::move(m_messages);
+        m_messages.clear();
+    }
+    lock.unlock();
+
+    if (!fn)
+    {
+        return;
+    }
+
+    for (auto& message : messages)
+    {
+        fn(message);
+    }
+}
+
+void QueuedLogSink::Log(const LogRecord& record)
+{
+    std::string message;
+
+    if (m_formatter)
+    {
+        m_formatter->FormatTo(message, record);
+    }
+    else
+    {
+        message.assign(record.message);
+    }
+
+    Log(std::move(message));
+}
+
+void QueuedLogSink::Log(std::string message)
+{
+    std::lock_guard lock(m_mutex);
+
+    m_messages.emplace_back(std::move(message));
+
+    if (m_messages.size() > m_count)
+    {
+        m_messages.pop_front();
+    }
+}
+
+size_t QueuedLogSink::Size() const
+{
+    std::lock_guard lock(m_mutex);
+    return m_messages.size();
+}
+// QueuedLogSink                                             END
 // -------------------------------------------------------------
 }  // namespace Fusion
