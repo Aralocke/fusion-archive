@@ -19,11 +19,16 @@
 #include <Fusion/Assert.h>
 #include <Fusion/Platform.h>
 
+#include <ctime>
 #include <iostream>
 
 #if FUSION_PLATFORM_POSIX
 #include <syslog.h>
 #endif
+
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 
 namespace Fusion
 {
@@ -145,6 +150,214 @@ std::ostream& operator<<(
     return o << ToString(level);
 }
 // LogLevel                                                  END
+// -------------------------------------------------------------
+// LogFormatter                                            START
+std::shared_ptr<LogFormatter> LogFormatter::Create(Params params)
+{
+    if (params.json)
+    {
+        return std::make_shared<Internal::JsonLogFormatter>(
+            std::move(params));
+    }
+    else
+    {
+        return std::make_shared<Internal::StandardLogFormatter>(
+            std::move(params));
+    }
+}
+
+std::string LogFormatter::Format(const LogRecord& record) const
+{
+    std::string message;
+    FormatTo(message, record);
+
+    return message;
+}
+// LogFormatter                                              END
+// -------------------------------------------------------------
+// StandardLogFormatter                                    START
+Internal::StandardLogFormatter::StandardLogFormatter(
+    Params params)
+    : m_params(std::move(params))
+{ }
+
+Internal::StandardLogFormatter::~StandardLogFormatter() = default;
+
+void Internal::StandardLogFormatter::FormatTo(
+    std::string& message,
+    const LogRecord& record) const
+{
+    using namespace std::chrono;
+    using namespace std::string_view_literals;
+
+    message.reserve(64 + record.message.size());
+
+    if (m_params.timestamps)
+    {
+        char buffer[32] = { 0 };
+
+        time_t input = system_clock::to_time_t(record.time);
+        struct tm now = { 0 };
+
+#if FUSION_PLATFORM_WINDOWS
+        localtime_s(&now, &input);
+#else
+        localtime_r(&input, &now);
+#endif
+
+        size_t count = strftime(
+            buffer,
+            sizeof(buffer) - 1,
+            "%Y-%m-%dT%H:%M:%S",
+            &now);
+        FUSION_ASSERT(count != 0);
+
+        message.append("["sv);
+        message.append(std::string_view(buffer, count));
+        message.append("]"sv);
+    }
+
+    if (!record.logger.empty())
+    {
+        message.append("["sv);
+        message.append(record.logger);
+        message.append("]"sv);
+    }
+
+    message.append("["sv);
+    message.append(ToString(record.level));
+    message.append("]"sv);
+
+    if (record.location && m_params.location)
+    {
+        message.append("["sv);
+        message.append(record.location.shortFilename);
+        message.append(":"sv);
+        message.append(std::to_string(record.location.lineno));
+        message.append("]"sv);
+    }
+
+    message.append(" "sv);
+    message.append(record.message);
+    message.append("\n"sv);
+}
+// StandardLogFormatter                                      END
+// -------------------------------------------------------------
+// JsonLogFormatter                                        START
+Internal::JsonLogFormatter::JsonLogFormatter(Params params)
+    : m_params(std::move(params))
+{ }
+
+Internal::JsonLogFormatter::~JsonLogFormatter() = default;
+
+void Internal::JsonLogFormatter::FormatTo(
+    std::string& message,
+    const LogRecord& record) const
+{
+    using namespace std::chrono;
+    using namespace rapidjson;
+
+    Document doc;
+    Document::AllocatorType& allocator = doc.GetAllocator();
+    doc.SetObject();
+
+    if (record.location && m_params.location)
+    {
+        Value location(kObjectType);
+
+        location.AddMember(
+            "filename",
+            Value(
+                record.location.shortFilename.data(),
+                record.location.shortFilename.size(),
+                allocator),
+            allocator);
+
+        location.AddMember(
+            "lineno",
+            record.location.lineno,
+            allocator);
+
+        doc.AddMember("location", std::move(location), allocator);
+    }
+
+    doc.AddMember(
+        "logger",
+        Value(
+            record.logger.data(),
+            record.logger.size(),
+            allocator),
+        allocator);
+
+    {
+        Value level(kObjectType);
+        std::string_view str = ToString(record.level);
+
+        level.AddMember(
+            "desc",
+            Value(
+                str.data(),
+                str.size(),
+                allocator),
+            allocator);
+
+        level.AddMember("level", uint8_t(record.level), allocator);
+        doc.AddMember("level", std::move(level), allocator);
+    }
+
+    doc.AddMember("threadId", record.threadId, allocator);
+
+    char buffer[32] = { 0 };
+    std::string_view time;
+    {
+        time_t input = system_clock::to_time_t(record.time);
+        struct tm now = { 0 };
+
+#if FUSION_PLATFORM_WINDOWS
+        localtime_s(&now, &input);
+#else
+        localtime_r(&input, &now);
+#endif
+
+        size_t count = strftime(
+            buffer,
+            sizeof(buffer) - 1,
+            "%Y-%m-%dT%H:%M:%S",
+            &now);
+        FUSION_ASSERT(count != 0);
+
+        time = std::string_view(buffer, count);
+    }
+
+    if (!time.empty())
+    {
+        doc.AddMember(
+            "timestamp",
+            Value(
+                time.data(),
+                time.size(),
+                allocator),
+            allocator);
+    }
+
+    doc.AddMember(
+        "message",
+        Value(
+            record.message.c_str(),
+            record.message.size(),
+            allocator),
+        allocator);
+
+    StringBuffer buf;
+    PrettyWriter<rapidjson::StringBuffer> writer(buf);
+    doc.Accept(writer);
+
+    size_t length = buf.GetLength();
+    message.reserve(length + 1);
+    message.append(buf.GetString(), length);
+    message += "\n";
+}
+// JsonLogFormatter                                          END
 // -------------------------------------------------------------
 // Logger                                                  START
 Logger::Logger(std::string name, LogSink sink)

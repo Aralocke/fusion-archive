@@ -25,6 +25,9 @@
 
 namespace Fusion::Internal
 {
+//
+//
+// 
 class Logging final
     : public std::enable_shared_from_this<Logging>
 {
@@ -83,5 +86,55 @@ private:
     static std::atomic<bool> s_started;
     static std::shared_ptr<Logging> s_instance FUSION_GUARDED_BY(s_mutex);
     static std::mutex s_mutex;
+};
+
+//
+//
+//
+class StandardLogFormatter : public LogFormatter
+{
+public:
+    //
+    //
+    //
+    StandardLogFormatter(Params params);
+
+    ~StandardLogFormatter() override;
+
+public:
+    //
+    //
+    //
+    void FormatTo(
+        std::string& buffer,
+        const LogRecord& record) const override;
+
+private:
+    Params m_params;
+};
+
+//
+//
+//
+class JsonLogFormatter : public LogFormatter
+{
+public:
+    //
+    //
+    //
+    JsonLogFormatter(Params params);
+
+    ~JsonLogFormatter() override;
+
+public:
+    //
+    //
+    //
+    void FormatTo(
+        std::string& buffer,
+        const LogRecord& record) const override;
+
+private:
+    Params m_params;
 };
 }  // namespace Fusion::Internal

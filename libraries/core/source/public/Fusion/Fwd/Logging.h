@@ -22,6 +22,7 @@ namespace Fusion
 {
 enum class LogLevel : uint8_t;
 
+class LogFormatter;
 class Logger;
 class Logging;
 
