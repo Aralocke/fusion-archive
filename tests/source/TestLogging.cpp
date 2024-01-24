@@ -21,6 +21,7 @@
 #include <Fusion/Memory.h>
 #include <Fusion/Platform.h>
 
+#include <array>
 #include <latch>
 
 TEST(LoggingTests, LogMessageBasicSink)
@@ -175,4 +176,64 @@ TEST(LoggingTests, SyslogTest)
 
     barrier.wait();
     ASSERT_TRUE(sunk);
+}
+
+TEST(LoggingTests, QueuedLogTest)
+{
+    Logging::Start();
+    FUSION_SCOPE_GUARD([] { Logging::Stop(); });
+
+    QueuedLogSink queue(2);
+    ASSERT_EQ(queue.Capacity(), 2);
+    ASSERT_TRUE(queue.Empty());
+
+    uint32_t count = 0;
+    std::latch barrier(3);
+
+    Logging::AddSink([&](const LogRecord& record) {
+        ASSERT_FALSE(record.message.empty());
+        queue.Log(record);
+
+        ++count;
+        barrier.count_down();
+    });
+
+    Logger logger = Logging::Get("Test");
+
+    FUSION_LOG_ERROR(logger, "test {}", 1);
+    {
+        ASSERT_EQ(queue.Size(), 1);
+        ASSERT_FALSE(queue.Empty());
+    }
+
+    FUSION_LOG_ERROR(logger, "test {}", 2);
+    {
+        ASSERT_EQ(queue.Size(), 2);
+        ASSERT_FALSE(queue.Empty());
+    }
+
+    FUSION_LOG_ERROR(logger, "test {}", 3);
+    {
+        ASSERT_EQ(queue.Size(), 2);
+        ASSERT_FALSE(queue.Empty());
+    }
+
+    barrier.wait();
+    ASSERT_EQ(count, 3);
+
+    std::vector<std::string> messages;
+    queue.Flush([&](std::string_view msg) {
+        messages.emplace_back(msg);
+    });
+
+    constexpr const auto results = std::to_array<std::string_view>({
+        "test 2",
+        "test 3",
+    });
+
+    ASSERT_EQ(messages.size(), results.size());
+    for (size_t i = 0; i < messages.size(); ++i)
+    {
+        ASSERT_EQ(messages[i], results[i]);
+    }
 }
