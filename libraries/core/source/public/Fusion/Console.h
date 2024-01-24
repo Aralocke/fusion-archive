@@ -218,6 +218,9 @@ public:
 
 public:
     ConsoleLogger(Params params);
+    ConsoleLogger(
+        std::shared_ptr<LogFormatter> formatter,
+        Params params);
     ~ConsoleLogger();
 
     //
@@ -243,8 +246,8 @@ private:
 
 private:
     Params m_params;
-    std::string m_logBuffer FUSION_GUARDED_BY(m_mutex);
-    std::string m_jsonBuffer FUSION_GUARDED_BY(m_mutex);
+    std::string m_buffer FUSION_GUARDED_BY(m_mutex);
+    std::shared_ptr<LogFormatter> m_formatter FUSION_GUARDED_BY(m_mutex);
     mutable std::mutex m_mutex;
 };
 }  // namespace Fusion

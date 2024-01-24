@@ -142,6 +142,67 @@ struct LogRecord
 //
 //
 //
+class LogFormatter
+    : public std::enable_shared_from_this<LogFormatter>
+{
+public:
+    LogFormatter(const LogFormatter&) = delete;
+    LogFormatter& operator=(const LogFormatter&) = delete;
+
+public:
+    //
+    //
+    //
+    struct Params
+    {
+        //
+        //
+        //
+        bool json{ false };
+
+        //
+        //
+        //
+        bool colors{ false };
+
+        //
+        //
+        //
+        bool location{ true };
+
+        //
+        //
+        //
+        bool timestamps{ true };
+    };
+
+public:
+    //
+    //
+    //
+    static std::shared_ptr<LogFormatter> Create(Params params);
+
+public:
+    LogFormatter() = default;
+    virtual ~LogFormatter() = default;
+
+public:
+    //
+    //
+    //
+    virtual void FormatTo(
+        std::string& buffer,
+        const LogRecord& record) const = 0;
+
+    //
+    //
+    //
+    std::string Format(const LogRecord& record) const;
+};
+
+//
+//
+//
 class Logger final
 {
 public:
