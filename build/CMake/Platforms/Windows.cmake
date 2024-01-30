@@ -16,17 +16,18 @@ if(NOT _FUSION_MAIN_PROJECT)
     return()
 endif()
 if(NOT WIN32)
-    message(FATAL_ERROR "WIndows platform file included on a non-WIN32 system")
+    message(FATAL_ERROR "Windows platform file included on a non-WIN32 system")
 endif()
 
 if(FUSION_SUPPORTS_ASAN)
-    FSN_CREATE_BUILD_CONFIG(Asan ${ADDRESS_SANITIZER_COMPILER_FLAG} "")
+    FSN_CREATE_BUILD_CONFIG(Asan ${ADDRESS_SANITIZER_COMPILER_FLAG} ${ADDRESS_SANITIZER_LINKER_FLAG})
 endif()
 if(FUSION_SUPPORTS_UBSAN)
     FSN_CREATE_BUILD_CONFIG(Ubsan ${UNDEFINED_SANITIZER_COMPILER_FLAG} "")
 endif()
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<OR:$<CONFIG:Debug>,$<CONFIG:Asan>,$<CONFIG:RelWithDebInfo>>:Debug>")
+set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 
 # Set Debug specific flags
 # /Z7 - produce .obj files for debugging
@@ -34,8 +35,13 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<OR:$<CONFIG:Debug>,$<CONFIG:Asa
 # /RTC1 - enable runtime-error checking
 # /Od - disables most optimizations
 # /Oy- disables frame pointer ommissions
-FSN_ADD_COMPILER_FLAGS(DEBUG CXX /Z7 /FC /RTC1 /Od /Oy-)
-FSN_ADD_COMPILER_FLAGS(DEBUG C /Z7 /FC /RTC1 /Od /Oy-)
+FSN_ADD_COMPILER_FLAGS(DEBUG CXX /Z7 /FC /Od /Oy-)
+FSN_ADD_COMPILER_FLAGS(DEBUG C /Z7 /FC /Od /Oy-)
+
+# Do not set runtime-error checking if we are buidling for ASAN
+# This is a Windows specific requirement.
+# FSN_ADD_COMPILER_FLAGS(DEBUG CXX /RTC1- /GS-)
+# FSN_ADD_COMPILER_FLAGS(DEBUG C /RTC1- /GS-)
 
 # Disable some Windows compilation warnings by default
 if(MSVC)
@@ -52,8 +58,8 @@ endif()
 # /GR- - Disable Runtime-Type-Checking (RTTI)
 # /DEBUG - Generate .pdb files for debugging
 # /LARGEADDRESSAWARE - mark executable for using >2GB addresses
-# /UNICODE - Enable wchar_t types
-FSN_ADD_COMPILER_FLAGS(CXX /MP /GR- /GS /UNICODE)
+FSN_ADD_COMPILER_FLAGS(CXX DEBUG /GS)
+FSN_ADD_COMPILER_FLAGS(CXX /MP /GR-)
 FSN_ADD_LINKER_FLAGS(/DEBUG /LARGEADDRESSAWARE)
 
 # Global Definitions that effect every project built.
