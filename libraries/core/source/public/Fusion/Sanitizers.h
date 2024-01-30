@@ -14,20 +14,14 @@
  * limitations under the License.
  **/
 
-#include <Fusion/Tests/Main.h>
+#pragma once
 
-#include <Fusion/Sanitizers.h>
+#include <string_view>
 
-#include <gtest/gtest.h>
-
-int main(int argc, char** argv)
+namespace Fusion
 {
-    using namespace Fusion;
-
-    // This should be at the top most of main() before anything else jumps in.
-    // We want to configure the sanitizers as soon as possible.
-    ConfigureSanitizerEnvironment("FusionTests");
-
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+//
+//
+//
+void ConfigureSanitizerEnvironment(std::string_view program);
+}  // namespace Fusion

@@ -40,13 +40,18 @@ endif()
 set(CMAKE_REQUIRED_FLAGS ${CMAKE_ORIGINAL_FLAGS})
 
 if(HAVE_FLAG_SANITIZE_ADDRESS)
-    set(ADDRESS_SANITIZER_COMPILER_FLAG "-fsanitize=address")
+    set(ADDRESS_SANITIZER_COMPILER_FLAG "-fsanitize=address -DNDEBUG")
+    set(ADDRESS_SANITIZER_LINKER_FLAG "-static-libasan")
 endif()
 if(HAVE_FLAG_ADDRESS_SANITIZER)
-    set(ADDRESS_SANITIZER_COMPILER_FLAG "-faddress-sanitizer")
+    set(ADDRESS_SANITIZER_COMPILER_FLAG "-faddress-sanitizer -DNDEBUG")
+    set(ADDRESS_SANITIZER_LINKER_FLAG "-static-libasan")
 endif()
 if(HAVE_FLAG_MSVC_SANITIZE_ADDRESS)
-    set(ADDRESS_SANITIZER_COMPILER_FLAG "/fsanitize=address /Zi")
+    # The option '/fsanitize-address-use-after-return' is disabled because it currently throws
+    # errors from within the C++ standard library.
+    set(ADDRESS_SANITIZER_COMPILER_FLAG "/fsanitize=address -D__SANITIZE_ADDRESS__=1 -DNDEBUG /INCREMENTAL:NO /Zi")
+    set(ADDRESS_SANITIZER_LINKER_FLAG "/INCREMENTAL:NO /INFERASANLIBS")
 endif()
 
 if(NOT ADDRESS_SANITIZER_COMPILER_FLAG)

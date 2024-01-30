@@ -127,7 +127,7 @@ target_compile_definitions(Fusion
 if(WIN32)
     target_compile_definitions(Fusion
         PUBLIC
-            -DUNICODE -D_UNICODE -DWIN32_LEAN_AND_MEAN
+            -DUNICODE=1 -D_UNICODE=1 -DWIN32_LEAN_AND_MEAN=1
     )
 endif()
 #
