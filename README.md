@@ -1,6 +1,12 @@
-# A Perpetual [Fusion](https://perpetual-fusion.com)
+# A Perpetual [Fusion](https://perpetualfusion.io)
 
 [![Apache Licensed](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
+
+## NOTICE
+
+This repository has been archived in favor of the [Perpetual Fusion Organization](https://github.com/perpetualfusion/fusion). Future work will continue there.
+
+## Introduction
 
 Fusion started as an educational project in early 2015 as I explored what C++ looked like in the Games Industry. It has evolved a lot over time but the Core mission remains the same: provide a common library for bootstrapping C/C++ based projects quickly and in any language that supports C/C++.
 
